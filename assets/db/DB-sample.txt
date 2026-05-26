@@ -1,0 +1,440 @@
+[overall index]
+
+(DB)
+sama_university			사마대학교의 데이터베이스
+
+(테이블)
+majors				전공 목록
+classes				전공별 수강가능한 과목
+students				학생 기본정보
+stu_classes			학생의 수강신청 목록
+admins				admin users 계정저장
+
+(계정)
+admin / ALL PRIVILEGES		pw: P@ssw0rd
+staff / SELECT only			pw: 123
+
+(컬럼 및 구조)
+전공 테이블			majors
+전공ID(PRIMARY)			major_id
+전공이름				major_name
+---------------------------------------------------------------
+과목 테이블			classes
+과목ID(PRIMARY)			class_id
+과목이름				class_name
++과목개요				class_desc
+과목자리수			seats
+전공ID(FK)				major_id
++전공이름(JOIN)			major_name
+---------------------------------------------------------------
+학생 테이블			students
+학생ID(PRIMARY)			stu_id
+학생이름				stu_name
+학생학번				stu_num
++학생전공(참조/cascade)		major_id
++학생비번				password
+---------------------------------------------------------------
+수강신청 테이블			stu_classes
+ID(PRIMARY)
+학생ID(FK)				stu_id
+과목ID(FK)				class_id
+---------------------------------------------------------------
+관리자 테이블			admin
+ID(PRIMARY)
+관리자ID				admin_user
+관리자PW				admin_pass
+
+majors
+ ├── major_id
+ └── major_name
+
+classes
+ ├── class_id
+ ├── class_name
+ ├── seats
+ └── major_id   (FK → majors.major_id)
+
+students
+ ├── stu_id
+ ├── stu_name
+ ├── password
+ ├── stu_num
+ └── major_id    (FK → majors.major_id)
+
+stu_classes
+ ├── id
+ ├── stu_id   (FK → students.student_id)
+ └── class_id     (FK → classes.class_id)
+
+admins
+ ├── id (PRI, auto)
+ ├── admin_user
+ └── admin_pass
+
+=====================================
+
+
+[세부 lists] 
+
+
+(전공&과목)
+컴퓨터공학과 		자료구조, 운영체제, 컴퓨터네트워크  
+기계공학과 		열역학, 재료역학, 기계설계기초  
+전자공학과 		전자회로, 신호처리, 디지털전자공학  
+경영학과 			회계원리, 마케팅원론, 경영정보시스템  
+미디어학과 		영상편집기초, 콘텐츠기획, 미디어심리  
+시각디자인학과 		타이포그래피, 브랜드디자인, UX/UI 디자인
+
+
+(과목별 정보)
+class_id	major_id	class_name	seats
+101	1	자료구조		40
+102	1	운영체제		35
+103	1	컴퓨터네트워크	30
+201	2	열역학		40
+202	2	재료역학		35
+203	2	기계설계기초	30
+301	3	전자회로		40
+302	3	신호처리		35
+303	3	디지털전자공학	30
+401	4	회계원리		50
+402	4	마케팅원론	45
+403	4	경영정보시스템	40
+501	5	영상편집기초	40
+502	5	콘텐츠기획	35
+503	5	미디어심리	30
+601	6	타이포그래피	40
+602	6	브랜드디자인	35
+603	6	UX/UI 디자인	30
+
+
+(학생 예시)
+
+stu_id				9001
+
+stu_name				박지후
+
+stu_num				20230004
+
+major_id				4
+
+class_registered			401,402
+
+
+=====================================
+
+
+[relationships]
+
+(전공>과목 1:n)
+컴퓨터공학과 → 자료구조, 운영체제, 컴퓨터네트워크  
+기계공학과 → 열역학, 재료역학, 기계설계기초  
+전자공학과 → 전자회로, 신호처리, 디지털전자공학  
+경영학과 → 회계원리, 마케팅원론, 경영정보시스템  
+미디어학과 → 영상편집기초, 콘텐츠기획, 미디어심리  
+시각디자인학과 → 타이포그래피, 브랜드디자인, UX/UI 디자인
+
+(학생>전공 1:1)
+
+(학생>과목 1:n)
+
+
+
+
+
+
+
+
+
+wget -o /etc/yum.repos.d/Rocky-BaseOS.repo \
+https://raw.githubusercontent.com/rocky-linux/rocky-repos/r9/SOURCES/Rocky-BaseOS.repo
+
+wget -o /etc/yum.repos.d/Rocky-AppStream.repo \
+https://raw.githubusercontent.com/rocky-linux/rocky-repos/r9/SOURCES/Rocky-AppStream.repo
+
+wget -o /etc/yum.repos.d/Rocky-CRB.repo \
+https://raw.githubusercontent.com/rocky-linux/rocky-repos/r9/SOURCES/Rocky-CRB.repo
+
+wget -o /etc/yum.repos.d/Rocky-Extras.repo \
+https://raw.githubusercontent.com/rocky-linux/rocky-repos/r9/SOURCES/Rocky-Extras.repo
+
+
+wget -O https://download.rockylinux.org/pub/rocky/9.6/BaseOS/x86_64/os/Packages/r/rocky-release-9.6-1.el9.noarch.rpm
+
+wget -O https://download.rockylinux.org/pub/rocky/9.6/BaseOS/x86_64/os/Packages/r/rocky-repos-9.6-1.el9.noarch.rpm
+
+wget -O https://download.rockylinux.org/pub/rocky/9.6/BaseOS/x86_64/os/Packages/r/rocky-gpg-keys-9.6-1.el9.noarch.rpm
+
+
+
+CREATE TABLE students (
+    stu_id INT PRIMARY KEY AUTO_INCREMENT,
+    stu_name VARCHAR(50) NOT NULL,
+    stu_number VARCHAR(20) UNIQUE NOT NULL,
+    major_id INT NOT NULL,
+    FOREIGN KEY (major_id) REFERENCES majors(major_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+CREATE TABLE stu_classes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    stu_id INT NOT NULL,
+    class_id INT NOT NULL,
+    FOREIGN KEY (stu_id) REFERENCES students(stu_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (class_id) REFERENCES classes(class_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+
+XE3 public/index.php 내용은 이렇게 라라벨 부트스트랩 코드여야 정상:
+
+<?php
+
+/**
+ * Laravel - A PHP Framework For Web Artisans
+ */
+
+define('LARAVEL_START', microtime(true));
+
+require __DIR__.'/../bootstrap/autoload.php';
+
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+
+$response = $kernel->handle(
+    $request = Illuminate\Http\Request::capture()
+);
+
+$response->send();
+
+$kernel->terminate($request, $response);
+
+
+
+
+Rocky 9 기본 SELinux 정책은 라라벨/Laravel 구조를 기본적으로 차단함.
+
+dnf install -y policycoreutils-python-utils
+semanage fcontext -a -t httpd_sys_rw_content_t "/export/home/samauni(/.*)?"
+restorecon -Rv /export/home/samauni
+
+
+/export/home/samauni/   ← XE3 전체
+/export/home/samauni/public/ ← nginx root
+
+
+
+
+이메일 sj1202pak@gmail.com
+비번 P@ssw0rd
+닉네임 psj
+아이디 adminpsj
+
+
+
+관리자 테이블 계정목록
+(admin_user: admin / admin_pass: P@ssw0rd)
+
+학생 계정목록
+(stu_num: 20251119 / password: P@ssw0rd)
+
+
+================================================
+
+[todo]
+
+#1. 수강신청 학생 계정당 max지정
+if stu_seat=3, !add_class 
+
++
+
+admin main.php 페이지 수강가능과목 추가(create)기능
+
+2. dns 연결
+
+3. https 작업
+
+4. 경로(/index.php 식으로 php파일 웹상에서 안보이도록)
+
+5. (admin)트래픽현황
+
+6. (admin)기술팀 문의페이지(기술팀 email로 form 날리는 기능 간단하게 구현)
+
+7. (sugang)기신청과목 버튼색 바꾸기 + 좌석 찬 수업 버튼색 바꾸고 
+아예 비활성화(요청 자체를 막아서 트래픽을 최소화한다)
+
+8. (sugang)학생 개인페이지에 증명사진 추가 + 기본 이미지(no image)
+
+9. err 페이지 작업 -> no address found으로 보안
+
+10. (admin)로그인 페이지 외부 ip에서는 아예 안보이도록? or redirection? 
+
+11. (sugang)철회버튼 alert(정말 철회하시겠습니까 재확인)
+
+12. (admin)강의추가시 ID 자동생성을 해당 전공 순서대로 + class_add.php 페이지에서 강제지정 가능하게
+
+================================================
+
+[db관련]
+
+
+5 	미디어영상학과 	503 	미디어심리 	30 / 30
+
+-> 삭제됐음 다시 추가하기
+
+
+[페이지]
+
+class_edit.php
+class_add.php
+
+강의 추가
+
+
+-
+
+
+서버 불안정으로 인해 평등하지 못하게 되서 = 같은 비용을 지불하고
+원하는 수업을 못들었다
+
+
+질문
+
+
+
+
+
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table majors {
+  major_id int [primary key]
+  Major_name varchar(50) [not null]
+
+  Note: 'majors table'
+}
+
+Table classes {
+  class_id int [pk, increment]
+  class varchar(50) [not null]
+  major varchar(50) [not null]
+  class_Name varchar(50) [not null]
+
+  Note: 'classes table'
+}
+
+Table students {
+  stu_id int [pk, increment]
+  stu_name varchar(50) [not null]
+  stu_number varchar(20) [unique, not null]
+  password varchar(60) [not null]
+  major_id int [not null]
+
+  Note: 'students table'
+}
+
+Table stu_classes {
+  id int [pk, increment]
+  stu_id int [not null]
+  class_id int [not null]
+}
+
+Table admins {
+  id int [pk, increment]
+  admin_user varchar(50) [unique, not null]
+  admin_pass varchar(60) [not null]
+  major_id int [not null]
+
+  Note: 'admins table'
+}
+
+Ref: stu_classes.stu_id > students.stu_id [delete: cascade, update: cascade]
+Ref: stu_classes.class_id > classes.class_id [delete: cascade, update: cascade]
+Ref: students.major_id > majors.major_id [delete: cascade, update: cascade]
+
+
+
+
+🟦 전공 1 — 컴퓨터공학과
+101 자료구조 (40석)
+
+→ 효율적인 데이터 저장·탐색 방법을 배우는 프로그래밍의 핵심 기초 과목.
+
+102 운영체제 (35석)
+
+→ CPU·메모리·프로세스가 어떻게 동작하는지 이해하는 시스템 기본 과목.
+
+103 컴퓨터네트워크 (30석)
+
+→ 인터넷이 실제로 어떻게 연결되고 통신하는지 배우는 네트워크 입문.
+
+🟩 전공 2 — 기계공학과
+201 열역학 (40석)
+
+→ 에너지·열·일의 관계를 다루며 기계 시스템의 원리를 이해하는 기초 이론.
+
+202 재료역학 (35석)
+
+→ 재료에 힘이 가해졌을 때 변형·응력 등을 분석하는 구조 설계의 기본.
+
+203 기계설계기초 (30석)
+
+→ 기계 요소 설계의 기본 원리를 익히고 도면 해석 능력을 향상시키는 수업.
+
+🟧 전공 3 — 전자공학과
+301 전자회로 (40석)
+
+→ 다양한 전자소자의 동작 원리와 회로 설계의 기초를 배우는 핵심 과목.
+
+302 신호처리 (35석)
+
+→ 아날로그·디지털 신호를 분석하고 변환하는 기술을 학습하는 필수 이론.
+
+303 디지털전자공학 (30석)
+
+→ 논리회로의 동작을 기반으로 디지털 시스템 설계 원리를 이해하는 수업.
+
+🟪 전공 4 — 경영학과
+401 회계원리 (50석)
+
+→ 재무제표 읽기와 기본 회계 개념을 익히는 경영학의 기초 중의 기초.
+
+402 마케팅원론 (45석)
+
+→ 소비자 행동부터 시장 분석까지 마케팅 전략의 전반을 이해하는 입문 과목.
+
+403 경영정보시스템 (40석)
+
+→ IT 기술이 기업 경영에 어떻게 활용되는지 배우는 실무 중심 과목.
+
+🟫 전공 5 — 미디어학과
+501 영상편집기초 (40석)
+
+→ 영상 컷 편집부터 타임라인 구성까지 영상 제작의 기본기를 배우는 수업.
+
+502 콘텐츠기획 (35석)
+
+→ 콘텐츠 아이디어 발굴·기획안을 작성하는 전 과정 실습 중심 수업.
+
+503 미디어심리 (30석)
+
+→ 미디어가 인간의 인지와 행동에 미치는 영향을 분석하는 흥미로운 과목.
+
+🟨 전공 6 — 디자인학과
+601 타이포그래피 (40석)
+
+→ 글꼴·서체 구성 원리를 익히며 시각 디자인의 기본 감각을 기르는 수업.
+
+602 브랜드디자인 (35석)
+
+→ 브랜드 아이덴티티를 시각적으로 설계하는 실무형 디자인 기초.
+
+603 UX/UI 디자인 (30석)
+
+→ 사용자 경험 중심의 인터페이스 설계 원리를 실습 중심으로 배우는 과목.
+
+

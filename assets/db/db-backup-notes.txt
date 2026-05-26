@@ -1,0 +1,106 @@
+
+
+** DB 2개로 나누는 순간 서로 참조가 불가능해져서
+연결하기가 매우 까다로움(PHP API로 코드단에서 연결시켜야 함)
+DB분리는 금지 **
+
+-> 테이블 단위 백업을 추천
+
+
+
+1-1. 웹서버의 백업
+=웹서버가 DB를 각자 소유한것이 아니라 한 개의 DB를 공유하는 형태이므로 백업은 각각 자기파일(php 등의 웹페이지 관련 파일)만 하면 됌
+
+
+[web1 admin]
+/export/home/admin/*
+/etc/httpd/conf.d/*
+
+[web2 sugang]
+/export/home/samauni/*
+/etc/httpd/conf.d/*
+
+
+1-2. (DB의 백업)테이블 단위 백업
+=DB는 하나로 두고 테이블 단위로 백업 가능함
+
+
+✔ admin 페이지에서 사용하는 테이블
+majors
+classes
+admins
+
+✔ sugang 페이지에서 사용하는 테이블
+students
+stu_classes
+(classes, majors는 READ만)
+
+그래서 Backup 서버에만 admin/sugang 두 폴더로 구분해서 저장
+
+
+=========================================
+
+3. dump 백업 명령어
+
+
+[web1 admin]
+
+mysqldump -u root -p sama_university majors > /backup/admin_db/majors.sql
+mysqldump -u root -p sama_university classes > /backup/admin_db/classes.sql
+mysqldump -u root -p sama_university admins > /backup/admin_db/admins.sql
+
+[web2 sugang]
+
+mysqldump -u root -p sama_university students > /backup/sugang_db/students.sql
+mysqldump -u root -p sama_university stu_classes > /backup/sugang_db/stu_classes.sql
+
+
+=========================================
+
+
+4. crontab 설정 예시
+
+
+0 3 * * * sh /scripts/backup_admin.sh
+0 4 * * * sh /scripts/backup_sugang.sh
+0 5 * * * sh /scripts/backup_db.sh
+
+=과부하 분산시키기 위해 1시간 간격 두고 자동백업
+
+
+=========================================
+
+
+5. shellscript 예시
+
+
+(/scripts/backup_admin.sh)
+
+#!/bin/bash
+DATE=$(date +%Y%m%d)
+
+# admin 웹 파일 백업
+tar -czf /backup/web_admin/admin_$DATE.tar.gz /export/home/admin
+
+# DB admin 관련 테이블 백업
+mysqldump -u root -p password sama_university majors > /backup/admin_db/majors_$DATE.sql
+mysqldump -u root -p password sama_university classes > /backup/admin_db/classes_$DATE.sql
+mysqldump -u root -p password sama_university admins > /backup/admin_db/admins_$DATE.sql
+
+
+
+
+(/scripts/backup_sugang.sh)
+
+#!/bin/bash
+DATE=$(date +%Y%m%d)
+
+# sugang 웹 파일 백업
+tar -czf /backup/web_sugang/sugang_$DATE.tar.gz /export/home/samauni
+
+# DB student 관련 테이블 백업
+mysqldump -u root -p password sama_university students > /backup/sugang_db/students_$DATE.sql
+mysqldump -u root -p password sama_university stu_classes > /backup/sugang_db/stu_classes_$DATE.sql
+
+
+

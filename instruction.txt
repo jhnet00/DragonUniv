@@ -1,0 +1,366 @@
+You are a senior frontend engineer and UI designer.
+
+Build the frontend for a portfolio project named:
+
+Dragon University Platform
+Korean name: 명룡대학교 플랫폼
+
+Important naming rule:
+Use "Dragon University" as the English name.
+Use "명룡대학교" as the Korean name.
+Ignore any previous English naming.
+
+Project purpose:
+This is NOT just a normal university website.
+This is a 2-person junior DevOps / Infrastructure Engineer portfolio project.
+
+The project represents a university course registration system designed to demonstrate:
+- high-traffic course registration flow
+- load-balanced infrastructure
+- production-like service operation
+- DNS routing
+- reverse proxy
+- Kubernetes deployment
+- CI/CD pipeline
+- monitoring dashboard
+- admin and student portal UI
+
+Frontend stack:
+- React
+- Vite
+- TypeScript if possible
+- TailwindCSS
+- Framer Motion
+- React Router
+- Component-based structure
+
+Design direction:
+Use the attached grayscale wireframe screenshots as the layout reference.
+Do NOT copy the grayscale look literally.
+Use the same structure and spacing direction, but redesign it as a modern, polished, premium web app.
+
+Visual theme:
+Traditional Korean university aesthetics + modern infrastructure platform.
+The UI should feel like:
+“A modern university service infrastructure operated by a DevOps team.”
+
+Style keywords:
+- dark mode by default
+- premium
+- elegant
+- calm
+- Korean traditional mood
+- modern DevOps dashboard
+- serious infrastructure system
+- not cartoonish
+- not generic Bootstrap
+- not bright startup SaaS
+- not overly colorful
+
+Color palette:
+Use these as the main theme colors:
+- Background: #0B0B0B
+- Primary Accent: #5C0A1D
+- Secondary Accent: #7A1E35
+- Text: #F5F5F5
+- Muted Text: #B8B8B8
+
+You may also use:
+- deep charcoal
+- warm gray
+- muted gold accent very lightly
+- glassmorphism cards
+- subtle borders
+- soft shadows
+- low-opacity burgundy gradients
+
+Assets:
+Actual image/logo assets will be provided later.
+For now, create clean placeholders for:
+- university logo
+- hero image
+- Korean traditional architecture image
+- course thumbnail
+- user avatar
+- monitoring/system diagram visuals
+
+Important:
+Prepare the code so assets can be replaced easily later.
+Use constants or config files for image paths and theme values.
+
+Pages to build:
+1. Landing Page
+2. Student Login Page
+3. Admin Login Page
+4. Course Registration Dashboard
+5. My Classroom / My Courses Page
+6. Course Detail Page
+7. User Profile Page
+8. Admin Dashboard Page
+9. Admin Course Management Page
+10. Notice Board Page
+11. Notice Detail Page
+12. Infrastructure Status / Monitoring Page
+13. 404 Page
+
+Reference screenshot layout requirements:
+
+A. Landing page based on index.php screenshot:
+- Top right small “index.php” style link may be removed or replaced with subtle developer-style text such as “portal.myeongryong.local”
+- Large hero section
+- Main Korean headline:
+  “역사와 전통이 살아 숨쉬는 곳,”
+  “명룡대학교”
+- Add English subtitle:
+  “Dragon University Course Registration Platform”
+- Add short DevOps-oriented description:
+  “A production-like course registration platform built with load-balanced infrastructure, Kubernetes deployment, CI/CD, DNS routing, and monitoring.”
+- Two main buttons:
+  “2025 2학기 수강신청”
+  “홈페이지 바로가기”
+- Add subtle background placeholder for Korean traditional architecture image
+- Use premium dark burgundy gradient overlay
+
+B. Student login page based on login.php screenshot:
+- Header:
+  “명룡대학교 | 수강신청시스템”
+- Centered login card
+- Title:
+  “수강신청시스템”
+  “LOGIN”
+- Fields:
+  “ID #학생번호”
+  “Password”
+- Button:
+  “로그인”
+- Link:
+  “Forgot password?”
+- Add small system status text:
+  “portal.myeongryong.local · secure session”
+- Use modern form styling, accessible labels, focus rings, validation message area
+
+C. Admin login page based on adminlogin.php screenshot:
+- Header:
+  “명룡대학교 | 관리자페이지”
+- Centered login card
+- Title:
+  “관리자페이지”
+  “LOGIN”
+- Fields:
+  “ID”
+  “Password”
+- Button:
+  “로그인”
+- Link:
+  “Forgot password?”
+- Admin page should feel more serious and operational
+- Add small text:
+  “Admin access · infrastructure control plane”
+
+D. Course Registration Dashboard based on Group 17 screenshot:
+- Header:
+  “명룡대학교 | 수강신청시스템”
+- Top right:
+  “로그아웃”
+- Left sidebar:
+  “MY 강의실”
+  Add menu items:
+  - 수강신청
+  - 나의 강의
+  - 시간표
+  - 프로필
+  - 공지사항
+  - 시스템 상태
+- Main area:
+  Responsive grid of course cards
+- Course card structure should follow screenshot:
+  - 전공명 | 강의ID
+  - 강의제목
+  - 강의 설명
+  - 잔여좌석 / 총좌석
+  - colored label chip
+  - “강의 신청” button
+- Use label chips with elegant colors, but still aligned with the dark burgundy theme.
+- Add sample course data:
+  1. 클라우드 인프라 설계 | INFRA-201
+  2. 리눅스 시스템 관리 | SYS-210
+  3. 네트워크와 DNS 라우팅 | NET-301
+  4. 컨테이너와 Docker | DEVOPS-220
+  5. Kubernetes 운영 실습 | K8S-310
+  6. CI/CD 파이프라인 | CICD-260
+  7. 데이터베이스 운영 | DB-230
+  8. 모니터링과 Grafana | OBS-240
+  9. 보안과 인증 시스템 | SEC-250
+- Each course should show realistic capacity:
+  e.g. 12/40, 3/35, 0/30, 27/50
+- If remaining seats are 0, disable the button and show “마감”
+- Add search/filter UI:
+  - search by course name
+  - filter by category
+  - filter by available seats only
+- Add high-traffic feeling:
+  - small status bar showing “현재 접속자 12,482명”
+  - “Load Balancer: Active”
+  - “API Latency: 42ms”
+  - “Ingress: Healthy”
+
+E. User Profile Page:
+- User avatar placeholder
+- Student information:
+  - 이름
+  - 학번
+  - 전공
+  - 이메일
+  - 신청 학점
+  - 최대 학점
+- Registered course summary
+- Account security card
+- Login history card
+- System session info
+
+F. Admin Dashboard:
+This page is important for DevOps/Infra portfolio value.
+Include:
+- Total users
+- Active sessions
+- Course registration requests per minute
+- API status
+- DB status
+- k3s cluster status
+- Nginx Ingress status
+- Jenkins latest deployment status
+- Docker image version
+- MariaDB connection status
+- Recent admin logs
+- Recent deployment timeline
+
+G. Admin Course Management:
+- Table of courses
+- Add course button
+- Edit/delete buttons
+- Course capacity editing
+- Course status: Open / Closed / Full
+- Mock CRUD UI only for now
+- Use modal or slide-over panel for create/edit course
+
+H. Notice Board:
+- List of notices
+- Category chip:
+  - 학사
+  - 시스템
+  - 긴급
+  - 점검
+- Search bar
+- Notice detail page
+- Include realistic notices:
+  - “2025학년도 2학기 수강신청 안내”
+  - “수강신청 시스템 점검 안내”
+  - “동시 접속 증가에 따른 대기열 안내”
+  - “인프라 확장 작업 완료 안내”
+
+I. Infrastructure Status / Monitoring Page:
+This page should visually support the DevOps portfolio story.
+Create dashboard cards for:
+- Bind9 DNS
+- Nginx Ingress Controller
+- React Frontend Pod
+- FastAPI Backend Pod
+- MariaDB
+- Jenkins Pipeline
+- Docker Registry
+- Prometheus
+- Grafana
+- k3s Node Status
+Show each as:
+- Healthy / Warning / Down
+- response time
+- uptime
+- last checked
+Add a simple architecture diagram section:
+USER → Bind9 DNS → Nginx Ingress → React Frontend / FastAPI Backend → MariaDB
+Add CI/CD flow section:
+GitHub → Jenkins → Docker Build → Docker Hub Push → k3s Rolling Update
+
+Implementation requirements:
+- Create a clean file structure:
+  src/
+    assets/
+    components/
+      layout/
+      common/
+      cards/
+      forms/
+      dashboard/
+    data/
+    pages/
+    routes/
+    styles/
+    utils/
+    App.tsx
+    main.tsx
+
+- Use reusable components:
+  Header
+  Sidebar
+  Layout
+  Button
+  Input
+  Badge
+  CourseCard
+  StatusCard
+  NoticeCard
+  StatCard
+  PageTitle
+  EmptyState
+  Modal
+
+- Use mock data from src/data for now.
+- Do not connect to backend yet.
+- But design the code so API integration will be easy later.
+- Use semantic naming.
+- Use responsive design for desktop/tablet/mobile.
+- Keep accessibility in mind.
+- Use hover states, focus states, loading states, disabled states.
+- Use Framer Motion for subtle page transitions and card entrance animations.
+- Avoid excessive animation.
+
+Functional behavior:
+- Login pages should accept any input and redirect to the corresponding dashboard for now.
+- Student login redirects to /courses
+- Admin login redirects to /admin
+- Course registration button should show a temporary registered state using local component state.
+- Course search and filters should work with mock data.
+- Logout should redirect to landing page.
+- 404 page should work.
+
+Copywriting tone:
+- Korean-first UI
+- English technical details can appear in small subtitles or infrastructure status cards.
+- Use professional, calm, premium wording.
+- Avoid childish student portal language.
+
+Portfolio emphasis:
+Add subtle DevOps details in the UI:
+- “portal.myeongryong.local”
+- “k3s cluster”
+- “Nginx Ingress”
+- “Rolling Update”
+- “Jenkins Build #128”
+- “MariaDB Primary”
+- “Prometheus scrape healthy”
+- “Grafana dashboard linked”
+- “Load Balancer Active”
+
+Deliverables:
+- Fully working React + Vite frontend
+- TailwindCSS configured
+- Router configured
+- All pages implemented
+- Mock data included
+- Responsive UI
+- No backend dependency
+- No broken imports
+- Clean README section explaining frontend routes and design concept
+
+Do not ask questions.
+Start implementing the frontend directly.

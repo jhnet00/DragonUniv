@@ -1,0 +1,13 @@
+<svg width="940" height="540" viewBox="0 0 940 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="940" height="540" fill="none"/>
+  <circle cx="168" cy="270" r="122" stroke="#D7A7B7" stroke-width="8"/>
+  <circle cx="168" cy="270" r="91" stroke="#D7A7B7" stroke-width="4" opacity=".82"/>
+  <path d="M117 305V209h84c16 0 30 6 41 17s17 25 17 41v77h-83c-33 0-59-6-59-39Z" stroke="#D7A7B7" stroke-width="5"/>
+  <path d="M129 225h68c24 0 44 20 44 44v58h-65c-27 0-47-7-47-34v-68Z" fill="#D7A7B7" opacity=".12"/>
+  <path d="M113 334c65-12 116-51 161-116-13 72-57 124-143 150l24-38-42 4Z" fill="#D7A7B7"/>
+  <path d="M119 179c30-33 68-48 113-44" stroke="#D7A7B7" stroke-width="4" stroke-linecap="round" opacity=".75"/>
+  <text x="168" y="129" text-anchor="middle" fill="#D7A7B7" font-size="30" font-weight="800" letter-spacing="5" transform="rotate(-7 168 129)">명룡대학교</text>
+  <text x="168" y="414" text-anchor="middle" fill="#D7A7B7" font-size="26" font-weight="800" letter-spacing="4">DRAGON UNIVERSITY</text>
+  <text x="349" y="267" fill="#D7A7B7" font-size="106" font-weight="900" letter-spacing="-2">명룡대학교</text>
+  <text x="352" y="348" fill="#D7A7B7" font-family="Georgia, 'Times New Roman', serif" font-size="60" letter-spacing="4">DRAGON UNIVERSITY</text>
+</svg>
