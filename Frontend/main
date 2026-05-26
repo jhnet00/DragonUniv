@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DragonUniv - 수강신청 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dragon-red: #C8102E;
+    --dragon-red-dark: #9B0B21;
+    --dragon-red-light: #F5E6E9;
+    --dragon-gold: #B8963E;
+    --dragon-gold-light: #F5EDD8;
+    --navy: #0D1B3E;
+    --navy-mid: #1A2F5E;
+    --navy-light: #E8EDF5;
+    --white: #FFFFFF;
+    --gray-50: #F8F9FA;
+    --gray-100: #F1F3F5;
+    --gray-200: #E9ECEF;
+    --gray-300: #DEE2E6;
+    --gray-500: #ADB5BD;
+    --gray-600: #6C757D;
+    --gray-700: #495057;
+    --gray-900: #212529;
+    --success: #1A6B3C;
+    --success-light: #E6F4ED;
+    --danger: #C8102E;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  }
+ 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-900);
+    font-size: 13px;
+    min-height: 100vh;
+  }
+ 
+  /* ── TOP HEADER ── */
+  .top-header {
+    background: var(--navy);
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+ 
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+ 
+  .dragon-emblem {
+    width: 38px;
+    height: 38px;
+    background: var(--dragon-red);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 2px 8px rgba(200,16,46,0.4);
+    flex-shrink: 0;
+  }
+ 
+  .logo-text {
+    line-height: 1.2;
+  }
+ 
+  .logo-univ {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 18px;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+ 
+  .logo-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+ 
+  .header-divider {
+    width: 1px;
+    height: 28px;
+    background: rgba(255,255,255,0.15);
+    margin: 0 20px;
+  }
+ 
+  .header-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dragon-gold);
+    letter-spacing: 0.5px;
+  }
+ 
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+  }
+ 
+  .semester-badge {
+    background: rgba(184,150,62,0.2);
+    border: 1px solid rgba(184,150,62,0.4);
+    color: var(--dragon-gold);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+ 
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.85);
+  }
+ 
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+    background: var(--dragon-red);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+ 
+  /* ── NAV TABS ── */
+  .nav-tabs-wrapper {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+  }
+ 
+  .nav-tabs {
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+ 
+  .nav-tab {
+    padding: 13px 22px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+ 
+  .nav-tab:hover { color: var(--dragon-red); }
+ 
+  .nav-tab.active {
+    color: var(--dragon-red);
+    border-bottom-color: var(--dragon-red);
+    font-weight: 700;
+  }
+ 
+  .nav-tab .tab-icon { font-size: 15px; }
+ 
+  /* ── MAIN LAYOUT ── */
+  .main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 24px 40px;
+  }
+ 
+  /* ── SECTION CARD ── */
+  .section-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+ 
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    background: var(--navy);
+    border-bottom: 3px solid var(--dragon-red);
+  }
+ 
+  .section-header.green {
+    background: var(--success);
+    border-bottom-color: var(--dragon-gold);
+  }
+ 
+  .section-header-icon {
+    width: 20px;
+    height: 20px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+ 
+  .section-header-meta {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+ 
+  .section-header-meta strong { font-weight: 700; }
+ 
+  /* ── FILTER ROW ── */
+  .filter-area {
+    padding: 12px 16px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+ 
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    padding: 3px 8px 3px 10px;
+    height: 32px;
+  }
+ 
+  .filter-group label {
+    font-size: 11px;
+    color: var(--gray-500);
+    white-space: nowrap;
+  }
+ 
+  .filter-group select,
+  .filter-group input {
+    border: none;
+    outline: none;
+    font-size: 12px;
+    color: var(--gray-900);
+    background: transparent;
+    font-family: 'Noto Sans KR', sans-serif;
+    min-width: 80px;
+  }
+ 
+  .btn-search {
+    background: var(--dragon-red);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0 18px;
+    height: 32px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+ 
+  .btn-search:hover { background: var(--dragon-red-dark); }
+ 
+  .btn-reset {
+    background: white;
+    color: var(--gray-600);
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    padding: 0 12px;
+    height: 32px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.15s;
+  }
+ 
+  .btn-reset:hover { border-color: var(--gray-500); color: var(--gray-900); }
+ 
+  /* ── RESULT BAR ── */
+  .result-bar {
+    padding: 7px 16px;
+    background: var(--navy-light);
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 12px;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+ 
+  .result-bar strong { color: var(--dragon-red); font-weight: 700; }
+ 
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; }
+ 
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+ 
+  thead th {
+    background: var(--gray-50);
+    color: var(--navy);
+    font-weight: 700;
+    padding: 8px 10px;
+    text-align: center;
+    border-bottom: 2px solid var(--gray-200);
+    border-right: 1px solid var(--gray-200);
+    white-space: nowrap;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 56px;
+  }
+ 
+  thead th:last-child { border-right: none; }
+ 
+  tbody td {
+    padding: 7px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--gray-200);
+    border-right: 1px solid var(--gray-200);
+    color: var(--gray-700);
+    white-space: nowrap;
+    transition: background 0.1s;
+  }
+ 
+  tbody td:last-child { border-right: none; }
+ 
+  tbody tr:hover td { background: var(--dragon-red-light); }
+  tbody tr:nth-child(even) td { background: var(--gray-50); }
+  tbody tr:nth-child(even):hover td { background: var(--dragon-red-light); }
+ 
+  td.name-cell { text-align: left; font-weight: 500; color: var(--gray-900); max-width: 180px; }
+ 
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+ 
+  .badge-required { background: var(--dragon-red-light); color: var(--dragon-red); border: 1px solid rgba(200,16,46,0.2); }
+  .badge-elective { background: var(--navy-light); color: var(--navy); border: 1px solid rgba(13,27,62,0.15); }
+  .badge-stamp { background: var(--dragon-gold-light); color: #7A5A10; border: 1px solid rgba(184,150,62,0.25); }
+  .badge-major { background: var(--success-light); color: var(--success); border: 1px solid rgba(26,107,60,0.2); }
+  .badge-day { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-300); }
+ 
+  /* ── BUTTONS ── */
+  .btn-add {
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: 'Noto Sans KR', sans-serif;
+    white-space: nowrap;
+  }
+ 
+  .btn-add:hover { background: var(--dragon-red); }
+ 
+  .btn-del {
+    background: white;
+    color: var(--danger);
+    border: 1px solid rgba(200,16,46,0.3);
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+ 
+  .btn-del:hover { background: var(--danger); color: white; border-color: var(--danger); }
+ 
+  .btn-save {
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+ 
+  .btn-save:hover { background: #145830; }
+ 
+  /* ── DRAG HANDLE ── */
+  .drag-handle {
+    cursor: grab;
+    color: var(--gray-400, #aaa);
+    font-size: 14px;
+    user-select: none;
+    padding: 2px 4px;
+  }
+ 
+  .drag-handle:active { cursor: grabbing; }
+ 
+  tr.drag-over td { background: var(--dragon-gold-light) !important; }
+ 
+  /* ── CART FOOTER ── */
+  .cart-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--gray-200);
+    background: var(--gray-50);
+  }
+ 
+  .cart-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--gray-600);
+  }
+ 
+  .cart-stats span strong {
+    color: var(--dragon-red);
+    font-size: 16px;
+    font-weight: 700;
+  }
+ 
+  /* ── NOTICE ── */
+  .notice-box {
+    padding: 10px 16px;
+    background: #fffbf0;
+    border-top: 1px solid #f0e0a0;
+    font-size: 11px;
+    color: #7A5A10;
+    line-height: 1.8;
+  }
+ 
+  .notice-box p::before { content: '※ '; }
+ 
+  /* ── CREDIT SUMMARY BAR ── */
+  .credit-bar {
+    display: flex;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--navy-light);
+    border-bottom: 1px solid var(--gray-200);
+  }
+ 
+  .credit-item {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    padding: 6px 14px;
+    text-align: center;
+    min-width: 90px;
+  }
+ 
+  .credit-item .ci-label {
+    font-size: 10px;
+    color: var(--gray-500);
+    display: block;
+    margin-bottom: 2px;
+  }
+ 
+  .credit-item .ci-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+ 
+  .credit-item.highlight .ci-value { color: var(--dragon-red); }
+ 
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--gray-500);
+  }
+ 
+  .empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; }
+  .empty-state p { font-size: 13px; line-height: 1.7; }
+ 
+  /* ── STATUS COUNT ── */
+  .cap-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+  }
+ 
+  .cap-bar .filled { color: var(--dragon-red); font-weight: 700; }
+  .cap-bar .total { color: var(--gray-500); }
+ 
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--navy);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.25s;
+    pointer-events: none;
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--dragon-red);
+    max-width: 320px;
+  }
+ 
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+ 
+  /* ── MY PAGE ── */
+  .mypage-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 16px;
+  }
+ 
+  .stat-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 14px 16px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+  }
+ 
+  .stat-card .sc-label { font-size: 11px; color: var(--gray-500); margin-bottom: 6px; display: block; }
+  .stat-card .sc-val { font-size: 24px; font-weight: 900; color: var(--navy); }
+  .stat-card .sc-val span { font-size: 13px; color: var(--gray-500); font-weight: 400; }
+  .stat-card.red .sc-val { color: var(--dragon-red); }
+ 
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .main-content { padding: 12px; }
+    .filter-area { gap: 6px; }
+    .header-right { display: none; }
+  }
+ 
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--gray-100); }
+  ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gray-500); }
+</style>
+</head>
+<body>
+ 
+<!-- ── TOP HEADER ── -->
+<header class="top-header">
+  <div class="logo-area">
+    <div class="dragon-emblem">🐉</div>
+    <div class="logo-text">
+      <div class="logo-univ">DragonUniv</div>
+      <div class="logo-sub">Course Registration</div>
+    </div>
+  </div>
+  <div class="header-divider"></div>
+  <div class="header-title">수강신청 시스템</div>
+  <div class="header-right">
+    <div class="semester-badge">2025-1학기</div>
+    <div class="user-info">
+      <div class="user-avatar">김</div>
+      <div>
+        <div style="font-weight:700;font-size:13px;color:white">김드래곤</div>
+        <div style="font-size:10px;opacity:0.6">컴퓨터공학과 / 20210001</div>
+      </div>
+    </div>
+  </div>
+</header>
+ 
+<!-- ── NAV TABS ── -->
+<div class="nav-tabs-wrapper">
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('search')" id="tab-btn-search">
+      <span class="tab-icon">🔍</span> 개설강좌 조회/신청
+    </button>
+    <button class="nav-tab" onclick="switchTab('my')" id="tab-btn-my">
+      <span class="tab-icon">📋</span> 나의 수강신청 현황
+    </button>
+  </div>
+</div>
+ 
+<!-- ── MAIN ── -->
+<div class="main-content">
+ 
+  <!-- ===== TAB: SEARCH ===== -->
+  <div id="tab-search">
+ 
+    <!-- 강좌 검색 -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-header-icon">🔍</div>
+        개설강좌 조회/신청
+        <div class="section-header-meta">
+          <span>신청기간: <strong>2025.02.17 09:00 ~ 02.21 17:00</strong></span>
+        </div>
+      </div>
+ 
+      <!-- 과목 유형 선택 -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--gray-200);display:flex;gap:0;">
+        <label class="type-radio" id="type-liberal">
+          <input type="radio" name="course-type" value="liberal" checked onchange="filterByType(this.value)">
+          교양과목
+        </label>
+        <label class="type-radio" id="type-major">
+          <input type="radio" name="course-type" value="major" onchange="filterByType(this.value)">
+          전공과목
+        </label>
+        <label class="type-radio" id="type-teaching">
+          <input type="radio" name="course-type" value="teaching" onchange="filterByType(this.value)">
+          교직과목
+        </label>
+        <label class="type-radio" id="type-ipp">
+          <input type="radio" name="course-type" value="ipp" onchange="filterByType(this.value)">
+          IPP교과목
+        </label>
+      </div>
+ 
+      <!-- 필터 -->
+      <div class="filter-area">
+        <div class="filter-group">
+          <label>학과</label>
+          <select id="f-dept">
+            <option value="">전체학과</option>
+            <option value="컴퓨터공학과">컴퓨터공학과</option>
+            <option value="경영학과">경영학과</option>
+            <option value="간호학과">간호학과</option>
+            <option value="사회복지학과">사회복지학과</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>학년</label>
+          <select id="f-grade">
+            <option value="">전체학년</option>
+            <option value="1">1학년</option>
+            <option value="2">2학년</option>
+            <option value="3">3학년</option>
+            <option value="4">4학년</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>요일</label>
+          <select id="f-day">
+            <option value="">전체요일</option>
+            <option value="월">월</option>
+            <option value="화">화</option>
+            <option value="수">수</option>
+            <option value="목">목</option>
+            <option value="금">금</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>교과목명</label>
+          <input type="text" id="f-keyword" placeholder="검색어 입력" style="width:120px" onkeydown="if(event.key==='Enter')doSearch()">
+        </div>
+        <button class="btn-search" onclick="doSearch()">🔍 조회</button>
+        <button class="btn-reset" onclick="doReset()">초기화</button>
+      </div>
+ 
+      <!-- 결과 수 -->
+      <div class="result-bar">
+        총 <strong id="result-count">12</strong>건의 강좌가 조회되었습니다.
+      </div>
+ 
+      <!-- 테이블 -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:60px">신청</th>
+              <th style="width:70px">교과코드</th>
+              <th style="min-width:160px;text-align:left;padding-left:14px">교과목명</th>
+              <th style="width:55px">학년</th>
+              <th style="width:80px">이수구분</th>
+              <th style="width:42px">학점</th>
+              <th style="width:65px">이론/실습</th>
+              <th style="width:42px">구분</th>
+              <th style="width:40px">분반</th>
+              <th style="width:80px">담당교수</th>
+              <th style="width:70px">수강정원</th>
+              <th style="width:42px">관심</th>
+              <th style="width:90px">강의시간</th>
+            </tr>
+          </thead>
+          <tbody id="course-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+ 
+    <!-- 관심과목 리스트 -->
+    <div class="section-card">
+      <div class="section-header green">
+        <div class="section-header-icon">🔖</div>
+        관심과목 리스트
+        <span style="font-size:11px;font-weight:400;opacity:0.8;margin-left:6px">* Drag &amp; Drop → 순서 정렬 → 순서저장 버튼 클릭 → 순서설정 완료</span>
+        <div class="section-header-meta">
+          관심신청학점: <strong id="cart-credit">0</strong>학점 &nbsp;|&nbsp; 관심과수: <strong id="cart-cnt">0</strong>
+        </div>
+      </div>
+ 
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px">순서</th>
+              <th style="width:70px">교과코드</th>
+              <th style="min-width:160px;text-align:left;padding-left:14px">교과목명</th>
+              <th style="width:55px">학년</th>
+              <th style="width:80px">이수구분</th>
+              <th style="width:42px">학점</th>
+              <th style="width:65px">이론/실습</th>
+              <th style="width:42px">구분</th>
+              <th style="width:40px">분반</th>
+              <th style="width:80px">담당교수</th>
+              <th style="width:60px">수강정원</th>
+              <th style="width:42px">관심원</th>
+              <th style="width:90px">강의시간</th>
+              <th style="min-width:100px">역량(심화/소통/창의/글로벌/실무)</th>
+              <th style="width:60px">관심과목</th>
+            </tr>
+          </thead>
+          <tbody id="cart-tbody"></tbody>
+        </table>
+      </div>
+ 
+      <div class="cart-footer">
+        <div class="cart-stats">
+          <span>총 신청학점 <strong id="cart-credit-foot">0</strong> <small>학점</small></span>
+          <span>관심과목 수 <strong id="cart-cnt-foot">0</strong> <small>과목</small></span>
+        </div>
+        <button class="btn-save" onclick="saveOrder()">💾 순서저장</button>
+      </div>
+ 
+      <div class="notice-box">
+        <p>관심 닫기를 취소하더라도 반드시 수강신청 기간에 수강신청을 해야합니다.</p>
+        <p>순서 정렬 후 반드시 <strong>"순서저장"</strong> 버튼을 클릭해야만 정렬한 순서가 저장됩니다.</p>
+      </div>
+    </div>
+ 
+  </div><!-- /tab-search -->
+ 
+  <!-- ===== TAB: MY PAGE ===== -->
+  <div id="tab-my" style="display:none">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-header-icon">📋</div>
+        나의 수강신청 현황
+        <div class="section-header-meta">2025학년도 1학기</div>
+      </div>
+ 
+      <div class="mypage-stats">
+        <div class="stat-card">
+          <span class="sc-label">신청 과목 수</span>
+          <div class="sc-val" id="my-cnt">0 <span>과목</span></div>
+        </div>
+        <div class="stat-card red">
+          <span class="sc-label">신청 학점</span>
+          <div class="sc-val" id="my-credit">0 <span>학점</span></div>
+        </div>
+        <div class="stat-card">
+          <span class="sc-label">최대 신청 가능</span>
+          <div class="sc-val">21 <span>학점</span></div>
+        </div>
+        <div class="stat-card">
+          <span class="sc-label">잔여 가능 학점</span>
+          <div class="sc-val" id="my-remain">21 <span>학점</span></div>
+        </div>
+      </div>
+ 
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>순번</th>
+              <th>교과코드</th>
+              <th style="text-align:left;padding-left:14px">교과목명</th>
+              <th>학년</th>
+              <th>이수구분</th>
+              <th>학점</th>
+              <th>담당교수</th>
+              <th>강의시간</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody id="my-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /tab-my -->
+ 
+</div><!-- /main-content -->
+ 
+<div class="toast" id="toast"></div>
+ 
+<style>
+  .type-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--gray-600);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .type-radio:has(input:checked) {
+    color: var(--dragon-red);
+    border-bottom-color: var(--dragon-red);
+    font-weight: 700;
+  }
+  .type-radio input { display: none; }
+</style>
+ 
+<script>
+// ── DATA ──
+const COURSES = [
+  {id:1,  code:'12979', name:'글로벌English1(재수강)',       dept:'교양학부',   grade:1,  type:'교양필수', credit:2, theory:2, practice:0, cat:'주', sec:'01', prof:'김민준', cap:20, enrolled:18, wish:5,  time:'화2,3',   days:['화']},
+  {id:2,  code:'12979', name:'글로벌English1(재수강)',       dept:'교양학부',   grade:1,  type:'교양필수', credit:2, theory:2, practice:0, cat:'주', sec:'02', prof:'이서연', cap:20, enrolled:15, wish:3,  time:'화2,3',   days:['화']},
+  {id:3,  code:'12979', name:'글로벌English1(재수강)',       dept:'교양학부',   grade:1,  type:'교양필수', credit:2, theory:2, practice:0, cat:'주', sec:'03', prof:'박지호', cap:20, enrolled:20, wish:2,  time:'화2,3',   days:['화']},
+  {id:4,  code:'14447', name:'영유아고수발달론(재수강)',       dept:'사회복지학과', grade:3,  type:'전공선택', credit:3, theory:3, practice:0, cat:'주', sec:'02', prof:'강하윤', cap:52, enrolled:30, wish:8,  time:'목2,화2,목4', days:['목','화']},
+  {id:5,  code:'44101', name:'가족복지론(재수강)',            dept:'사회복지학과', grade:3,  type:'전공선택', credit:3, theory:3, practice:0, cat:'주', sec:'02', prof:'윤도현', cap:52, enrolled:40, wish:6,  time:'월6,7,8',   days:['월']},
+  {id:6,  code:'14659', name:'창의적사고와문제해결',           dept:'교양학부',   grade:99, type:'스탐강좌', credit:2, theory:2, practice:0, cat:'주', sec:'01', prof:'한예린', cap:60, enrolled:55, wish:12, time:'화1,2',   days:['화']},
+  {id:7,  code:'21334', name:'데이터구조',                   dept:'컴퓨터공학과', grade:2,  type:'전공필수', credit:3, theory:3, practice:0, cat:'주', sec:'01', prof:'오준혁', cap:35, enrolled:28, wish:4,  time:'월3,수3,금3', days:['월','수','금']},
+  {id:8,  code:'21335', name:'알고리즘',                    dept:'컴퓨터공학과', grade:3,  type:'전공필수', credit:3, theory:3, practice:0, cat:'주', sec:'01', prof:'정세훈', cap:35, enrolled:31, wish:7,  time:'화1,목1,화3', days:['화','목']},
+  {id:9,  code:'33210', name:'마케팅원론',                   dept:'경영학과',   grade:2,  type:'전공선택', credit:3, theory:3, practice:0, cat:'주', sec:'01', prof:'임채원', cap:40, enrolled:22, wish:3,  time:'화4,목4',   days:['화','목']},
+  {id:10, code:'55012', name:'간호학개론',                   dept:'간호학과',   grade:1,  type:'전공필수', credit:2, theory:2, practice:0, cat:'주', sec:'01', prof:'신보람', cap:30, enrolled:30, wish:1,  time:'수2,금2',   days:['수','금']},
+  {id:11, code:'66789', name:'경영정보시스템',                dept:'경영학과',   grade:3,  type:'전공선택', credit:3, theory:3, practice:0, cat:'주', sec:'01', prof:'백승우', cap:45, enrolled:38, wish:5,  time:'목3,토1',   days:['목']},
+  {id:12, code:'77123', name:'창업과혁신',                   dept:'교양학부',   grade:99, type:'교양선택', credit:2, theory:2, practice:0, cat:'주', sec:'01', prof:'류지은', cap:50, enrolled:44, wish:9,  time:'금4,5',   days:['금']},
+];
+ 
+let displayedCourses = [...COURSES];
+let cart = [];
+let myRegistered = [];
+let dragSrcIdx = null;
+ 
+// ── RENDER COURSES ──
+function getBadgeClass(type){
+  if(type.includes('필수')) return 'badge-required';
+  if(type.includes('선택')) return type.includes('전공') ? 'badge-major' : 'badge-elective';
+  if(type.includes('스탐')) return 'badge-stamp';
+  return 'badge-elective';
+}
+ 
+function renderCourses(list){
+  const tb = document.getElementById('course-tbody');
+  document.getElementById('result-count').textContent = list.length;
+  if(list.length === 0){
+    tb.innerHTML = `<tr><td colspan="13"><div class="empty-state"><div class="empty-icon">🔍</div><p>검색 결과가 없습니다.<br>검색 조건을 변경해 보세요.</p></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = list.map(c => {
+    const inCart = cart.some(x => x.id === c.id);
+    const full = c.enrolled >= c.cap;
+    return `<tr>
+      <td>${inCart
+        ? '<span style="font-size:11px;color:var(--success);font-weight:700">✓ 추가됨</span>'
+        : `<button class="btn-add" onclick="addCart(${c.id})" ${full?'style="background:#aaa;cursor:not-allowed"':''} ${full?'disabled':''}>
+            ${full ? '마감' : '관심등록'}
+          </button>`
+      }</td>
+      <td style="color:var(--gray-500)">${c.code}</td>
+      <td class="name-cell" style="padding-left:14px">${c.name}</td>
+      <td>${c.grade === 99 ? '전학년' : c.grade + '학년'}</td>
+      <td><span class="badge ${getBadgeClass(c.type)}">${c.type}</span></td>
+      <td><strong>${c.credit}</strong></td>
+      <td>${c.theory}/${c.practice}</td>
+      <td><span class="badge badge-day">${c.cat}</span></td>
+      <td>${c.sec}</td>
+      <td>${c.prof}</td>
+      <td>
+        <div class="cap-bar">
+          <span class="filled">${c.enrolled}</span>
+          <span class="total">/ ${c.cap}</span>
+        </div>
+      </td>
+      <td style="color:var(--gray-500)">${c.wish}</td>
+      <td style="font-size:11px;color:var(--gray-600)">${c.time}</td>
+    </tr>`;
+  }).join('');
+}
+ 
+// ── RENDER CART ──
+function renderCart(){
+  const tb = document.getElementById('cart-tbody');
+  const totalCredit = cart.reduce((s,c) => s + c.credit, 0);
+  document.getElementById('cart-credit').textContent = totalCredit;
+  document.getElementById('cart-cnt').textContent = cart.length;
+  document.getElementById('cart-credit-foot').textContent = totalCredit;
+  document.getElementById('cart-cnt-foot').textContent = cart.length;
+ 
+  if(cart.length === 0){
+    tb.innerHTML = `<tr><td colspan="15"><div class="empty-state"><div class="empty-icon">🔖</div><p>관심과목이 없습니다.<br>위 목록에서 <strong>관심등록</strong> 버튼을 클릭해 추가하세요.</p></div></td></tr>`;
+    return;
+  }
+ 
+  tb.innerHTML = cart.map((c, i) => `
+    <tr draggable="true"
+        ondragstart="dragStart(event,${i})"
+        ondragover="dragOver(event)"
+        ondrop="drop(event,${i})"
+        ondragleave="dragLeave(event)"
+        id="cart-row-${i}">
+      <td><span class="drag-handle" title="드래그로 순서 변경">⠿</span></td>
+      <td style="color:var(--gray-500)">${c.code}</td>
+      <td class="name-cell" style="padding-left:14px">${c.name}</td>
+      <td>${c.grade === 99 ? '전학년' : c.grade + '학년'}</td>
+      <td><span class="badge ${getBadgeClass(c.type)}">${c.type}</span></td>
+      <td><strong>${c.credit}</strong></td>
+      <td>${c.theory}/${c.practice}</td>
+      <td><span class="badge badge-day">${c.cat}</span></td>
+      <td>${c.sec}</td>
+      <td>${c.prof}</td>
+      <td>
+        <div class="cap-bar">
+          <span class="filled">${c.enrolled}</span>
+          <span class="total">/ ${c.cap}</span>
+        </div>
+      </td>
+      <td style="color:var(--gray-500)">${c.wish}</td>
+      <td style="font-size:11px;color:var(--gray-600)">${c.time}</td>
+      <td style="font-size:10px;color:var(--gray-500)">교양/소통</td>
+      <td><button class="btn-del" onclick="removeCart(${i})">삭제</button></td>
+    </tr>`).join('');
+}
+ 
+// ── RENDER MY PAGE ──
+function renderMyPage(){
+  const tb = document.getElementById('my-tbody');
+  const total = myRegistered.reduce((s,c) => s + c.credit, 0);
+  document.getElementById('my-cnt').innerHTML = myRegistered.length + ' <span>과목</span>';
+  document.getElementById('my-credit').innerHTML = total + ' <span>학점</span>';
+  document.getElementById('my-remain').innerHTML = (21 - total) + ' <span>학점</span>';
+ 
+  if(myRegistered.length === 0){
+    tb.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📋</div><p>수강신청이 완료된 과목이 없습니다.<br>관심과목 목록에서 최종 수강신청을 진행해주세요.</p></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = myRegistered.map((c,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${c.code}</td>
+      <td class="name-cell" style="padding-left:14px">${c.name}</td>
+      <td>${c.grade===99?'전학년':c.grade+'학년'}</td>
+      <td><span class="badge ${getBadgeClass(c.type)}">${c.type}</span></td>
+      <td><strong>${c.credit}</strong></td>
+      <td>${c.prof}</td>
+      <td style="font-size:11px">${c.time}</td>
+      <td><span class="badge" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7">신청완료</span></td>
+    </tr>`).join('');
+}
+ 
+// ── CART ACTIONS ──
+function addCart(id){
+  const c = COURSES.find(x => x.id === id);
+  if(!c) return;
+  if(cart.some(x => x.id === c.id)){
+    showToast('이미 관심과목에 추가된 강좌입니다.', 'error'); return;
+  }
+  const totalCredit = cart.reduce((s,x) => s + x.credit, 0);
+  if(totalCredit + c.credit > 21){
+    showToast('최대 신청 가능 학점(21학점)을 초과합니다.', 'error'); return;
+  }
+  cart.push({...c});
+  renderCart();
+  renderCourses(displayedCourses);
+  showToast(`[${c.name}] 관심과목에 추가되었습니다.`, 'success');
+}
+ 
+function removeCart(idx){
+  const name = cart[idx].name;
+  cart.splice(idx, 1);
+  renderCart();
+  renderCourses(displayedCourses);
+  showToast(`[${name}] 관심과목에서 삭제되었습니다.`);
+}
+ 
+// ── DRAG & DROP ──
+function dragStart(e, i){ dragSrcIdx = i; e.dataTransfer.effectAllowed = 'move'; }
+function dragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); return false; }
+function dragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function drop(e, i){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(dragSrcIdx === null || dragSrcIdx === i) return;
+  const item = cart.splice(dragSrcIdx, 1)[0];
+  cart.splice(i, 0, item);
+  dragSrcIdx = null;
+  renderCart();
+}
+ 
+// ── SEARCH ──
+function doSearch(){
+  const dept = document.getElementById('f-dept').value;
+  const grade = document.getElementById('f-grade').value;
+  const day = document.getElementById('f-day').value;
+  const kw = document.getElementById('f-keyword').value.trim().toLowerCase();
+ 
+  displayedCourses = COURSES.filter(c => {
+    if(dept && c.dept !== dept) return false;
+    if(grade && c.grade !== parseInt(grade)) return false;
+    if(day && !c.days.includes(day)) return false;
+    if(kw && !c.name.toLowerCase().includes(kw) && !c.code.includes(kw) && !c.prof.includes(kw)) return false;
+    return true;
+  });
+  renderCourses(displayedCourses);
+}
+ 
+function doReset(){
+  document.getElementById('f-dept').value = '';
+  document.getElementById('f-grade').value = '';
+  document.getElementById('f-day').value = '';
+  document.getElementById('f-keyword').value = '';
+  displayedCourses = [...COURSES];
+  renderCourses(displayedCourses);
+}
+ 
+function filterByType(val){ doSearch(); }
+ 
+// ── ORDER SAVE ──
+function saveOrder(){
+  if(cart.length === 0){ showToast('관심과목이 없습니다.', 'error'); return; }
+  showToast('순서가 저장되었습니다. (' + cart.map(c=>c.name.substring(0,6)).join(', ') + ')', 'success');
+}
+ 
+// ── TAB SWITCH ──
+function switchTab(tab){
+  document.getElementById('tab-search').style.display = tab === 'search' ? '' : 'none';
+  document.getElementById('tab-my').style.display = tab === 'my' ? '' : 'none';
+  document.getElementById('tab-btn-search').classList.toggle('active', tab === 'search');
+  document.getElementById('tab-btn-my').classList.toggle('active', tab === 'my');
+  if(tab === 'my') renderMyPage();
+}
+ 
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+ 
+// ── INIT ──
+renderCourses(COURSES);
+renderCart();
+</script>
+</body>
+</html>
