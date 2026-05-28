@@ -30,4 +30,3 @@ export function Login({ type }: { type: "student" | "admin" }) {
     </main>
   );
 }
-
