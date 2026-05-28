@@ -23,7 +23,7 @@ export function Login({ type }: { type: "student" | "admin" }) {
           <span>Password</span>
           <div className="input-wrap"><LockKeyhole size={18} /><input type="password" placeholder="비밀번호를 입력해주세요." /></div>
         </label>
-        <Link to={admin ? "/admin" : "/register"} className="login-submit">로그인</Link>
+        <Link to={admin ? "/admin/dashboard" : "/register"} className="login-submit">로그인</Link>
         <a className="forgot" href="#">Forgot password?</a>
         <small>{admin ? "Admin access · infrastructure control plane" : `${brand.host} · secure session`}</small>
       </section>

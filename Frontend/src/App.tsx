@@ -1,5 +1,6 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
+import { AdminShell } from "./components/AdminShell";
 import { AdminCourses } from "./pages/AdminCourses";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { Classroom } from "./pages/Classroom";
@@ -16,22 +17,29 @@ import { Register } from "./pages/Register";
 export default function App() {
   return (
     <Routes>
+      {/* 공통 */}
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login type="student" />} />
-      <Route path="/admin-login" element={<Login type="admin" />} />
+      <Route path="/admin" element={<Login type="admin" />} />
+
+      {/* 학생 영역 */}
       <Route element={<AppShell />}>
         <Route path="/register" element={<Register />} />
         <Route path="/classroom" element={<Classroom />} />
         <Route path="/courses/:id" element={<CourseDetail />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/courses" element={<AdminCourses />} />
         <Route path="/notices" element={<Notices />} />
         <Route path="/notices/:id" element={<NoticeDetail />} />
         <Route path="/monitoring" element={<Monitoring />} />
       </Route>
-      <Route path="/main.html" element={<Navigate to="/register" replace />} />
-      <Route path="/login.html" element={<Navigate to="/login" replace />} />
+
+      {/* 관리자 영역 */}
+      <Route element={<AdminShell />}>
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/courses" element={<AdminCourses />} />
+        <Route path="/admin/monitoring" element={<Monitoring />} />
+      </Route>
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
