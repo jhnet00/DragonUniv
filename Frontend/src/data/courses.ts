@@ -1,13 +1,16 @@
 export type Course = {
   id: string;
+  classId?: number;
   major: string;
   title: string;
   desc: string;
   seatsLeft: number;
   seatsTotal: number;
+  registeredCount?: number;
   category: string;
   credits: number;
   instructor: string;
+  isRegistered?: boolean;
 };
 
 export const courses: Course[] = [
@@ -25,4 +28,3 @@ export const courses: Course[] = [
 export const registeredCourseIds = ["INFRA-201", "CICD-260", "OBS-240"];
 
 export const categories = ["All", ...Array.from(new Set(courses.map((course) => course.category)))];
-

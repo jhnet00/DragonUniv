@@ -20,7 +20,7 @@ export default function App() {
       {/* 공통 */}
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login type="student" />} />
-      <Route path="/admin" element={<Login type="admin" />} />
+      <Route path="/admin-login" element={<Login type="admin" />} />
 
       {/* 학생 영역 */}
       <Route element={<AppShell />}>
@@ -34,9 +34,12 @@ export default function App() {
       </Route>
 
       {/* 관리자 영역 */}
-      <Route element={<AdminShell />}>
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route path="/admin" element={<AdminShell />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="/admin/courses" element={<AdminCourses />} />
+        <Route path="/admin/notice" element={<Notices />} />
+        <Route path="/admin/notices" element={<Notices />} />
         <Route path="/admin/monitoring" element={<Monitoring />} />
       </Route>
 
@@ -44,4 +47,3 @@ export default function App() {
     </Routes>
   );
 }
-
