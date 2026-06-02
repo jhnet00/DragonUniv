@@ -30,7 +30,6 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/notices" element={<Notices />} />
         <Route path="/notices/:id" element={<NoticeDetail />} />
-        <Route path="/monitoring" element={<Monitoring />} />
       </Route>
 
       {/* 관리자 영역 */}

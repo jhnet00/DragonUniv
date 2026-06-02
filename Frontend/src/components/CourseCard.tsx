@@ -1,4 +1,4 @@
-import { CheckCircle2, Star } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleGauge, CirclePause, CircleX } from "lucide-react";
 import type { Course } from "../data/courses";
 
 type CourseCardProps = {
@@ -11,15 +11,22 @@ export function CourseCard({ course, busy = false, onRegister }: CourseCardProps
   const soldOut = course.seatsLeft === 0;
   const registered = Boolean(course.isRegistered);
   const ratio = course.seatsLeft / course.seatsTotal;
-  const tone = soldOut ? "danger" : ratio < 0.25 ? "warn" : ratio < 0.55 ? "info" : "good";
+  const availability = soldOut
+    ? { tone: "danger", label: "마감", icon: CircleX }
+    : ratio >= 0.6
+      ? { tone: "good", label: "여유", icon: CircleGauge }
+      : ratio >= 0.4
+        ? { tone: "info", label: "보통", icon: CirclePause }
+        : { tone: "warn", label: "임박", icon: CircleAlert };
+  const AvailabilityIcon = availability.icon;
 
   return (
     <article className="course-card">
       <div className="course-row">
         <span className="course-meta">{course.major} | {course.id}</span>
-        <span className={`label-chip ${registered ? "good" : tone}`}>
-          {registered ? <CheckCircle2 size={14} /> : <Star size={14} fill="currentColor" />}
-          {registered ? "신청완료" : course.category}
+        <span className={`label-chip ${registered ? "good" : availability.tone}`}>
+          {registered ? <CheckCircle2 size={14} /> : <AvailabilityIcon size={14} />}
+          {registered ? "신청완료" : availability.label}
         </span>
       </div>
       <h3>{course.title}</h3>
