@@ -1,0 +1,233 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dragon-univ
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mariadb-secret
+  namespace: dragon-univ
+type: Opaque
+stringData:
+  MARIADB_ROOT_PASSWORD: rootpass
+  MARIADB_USER: dragon_app
+  MARIADB_PASSWORD: dragonpass
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-config
+  namespace: dragon-univ
+data:
+  MARIADB_DATABASE: dragon_university
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-initdb
+  namespace: dragon-univ
+data:
+  001_schema.sql: |
+    CREATE DATABASE IF NOT EXISTS dragon_university
+      DEFAULT CHARACTER SET utf8mb4
+      DEFAULT COLLATE utf8mb4_unicode_ci;
+
+    USE dragon_university;
+
+    CREATE TABLE IF NOT EXISTS majors (
+      major_id INT PRIMARY KEY AUTO_INCREMENT,
+      major_name VARCHAR(100) NOT NULL UNIQUE
+    );
+
+    CREATE TABLE IF NOT EXISTS classes (
+      class_id INT PRIMARY KEY,
+      class_code VARCHAR(30) NOT NULL UNIQUE,
+      class_name VARCHAR(120) NOT NULL,
+      class_desc TEXT NOT NULL,
+      seats INT NOT NULL,
+      credits INT NOT NULL DEFAULT 3,
+      category VARCHAR(60) NOT NULL,
+      instructor VARCHAR(60) NOT NULL,
+      major_id INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (major_id) REFERENCES majors(major_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS students (
+      stu_id INT PRIMARY KEY AUTO_INCREMENT,
+      stu_name VARCHAR(50) NOT NULL,
+      stu_num VARCHAR(20) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      email VARCHAR(120),
+      max_classes INT NOT NULL DEFAULT 3,
+      max_credits INT NOT NULL DEFAULT 18,
+      major_id INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (major_id) REFERENCES majors(major_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS stu_classes (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      stu_id INT NOT NULL,
+      class_id INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uniq_student_class (stu_id, class_id),
+      FOREIGN KEY (stu_id) REFERENCES students(stu_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (class_id) REFERENCES classes(class_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS admins (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      admin_user VARCHAR(50) UNIQUE NOT NULL,
+      admin_pass VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  002_seed.sql: |
+    USE dragon_university;
+
+    INSERT INTO majors (major_id, major_name) VALUES
+      (1, '컴퓨터공학과'),
+      (2, '기계공학과'),
+      (3, '전자공학과'),
+      (4, '경영학과'),
+      (5, '미디어학과'),
+      (6, '시각디자인학과')
+    ON DUPLICATE KEY UPDATE major_name = VALUES(major_name);
+
+    INSERT INTO classes (class_id, class_code, class_name, class_desc, seats, credits, category, instructor, major_id) VALUES
+      (101, 'INFRA-201', '클라우드 인프라 설계', '고가용성 웹 서비스를 위한 VPC, DNS, 로드밸런싱 설계', 40, 3, 'Infrastructure', '한도윤', 1),
+      (102, 'SYS-210', '리눅스 시스템 관리', 'Rocky Linux 운영, 권한, SELinux, 서비스 장애 대응', 35, 3, 'System', '김서연', 1),
+      (103, 'NET-301', '네트워크와 DNS 라우팅', 'DNS 레코드, Nginx reverse proxy, ingress routing', 30, 3, 'Network', '윤태민', 3),
+      (201, 'DEVOPS-220', '컨테이너와 Docker', '이미지 빌드, 레지스트리, compose 기반 로컬 운영', 50, 3, 'DevOps', '이지원', 1),
+      (202, 'K8S-310', 'Kubernetes 운영 실습', 'k3s 클러스터, 배포 전략, service discovery 실습', 30, 3, 'Kubernetes', '박준호', 1),
+      (203, 'CICD-260', 'CI/CD 파이프라인', 'Jenkins, Git workflow, blue-green deployment', 45, 3, 'CI/CD', '정하린', 4),
+      (301, 'DB-230', '데이터베이스 운영', 'MariaDB 스키마, 테이블 단위 백업, 복구 자동화', 40, 3, 'Database', '최민재', 4),
+      (302, 'OBS-240', '모니터링과 Grafana', '메트릭 수집, 대시보드, 알림 정책과 SLO', 35, 3, 'Observability', '송아린', 5),
+      (303, 'SEC-250', '보안과 인증 시스템', '세션 보안, 관리자 권한 분리, 접근 로그 분석', 40, 3, 'Security', '오현우', 6)
+    ON DUPLICATE KEY UPDATE
+      class_name = VALUES(class_name),
+      class_desc = VALUES(class_desc),
+      seats = VALUES(seats),
+      credits = VALUES(credits),
+      category = VALUES(category),
+      instructor = VALUES(instructor),
+      major_id = VALUES(major_id);
+
+    INSERT INTO students (stu_id, stu_name, stu_num, password, email, max_classes, max_credits, major_id) VALUES
+      (9001, '박지후', '20251119', 'P@ssw0rd', 'jihoo.park@dragon.ac.kr', 3, 18, 4),
+      (9002, '김드래곤', '20210001', 'P@ssw0rd', 'dragon.kim@dragon.ac.kr', 3, 18, 1)
+    ON DUPLICATE KEY UPDATE
+      stu_name = VALUES(stu_name),
+      password = VALUES(password),
+      email = VALUES(email),
+      max_classes = VALUES(max_classes),
+      max_credits = VALUES(max_credits),
+      major_id = VALUES(major_id);
+
+    INSERT INTO admins (admin_user, admin_pass) VALUES
+      ('admin', 'P@ssw0rd')
+    ON DUPLICATE KEY UPDATE admin_pass = VALUES(admin_pass);
+
+    INSERT IGNORE INTO stu_classes (stu_id, class_id) VALUES
+      (9001, 101),
+      (9001, 203);
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb
+  namespace: dragon-univ
+spec:
+  selector:
+    app: mariadb
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb
+  namespace: dragon-univ
+spec:
+  serviceName: mariadb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11.4
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3306
+              name: mysql
+          env:
+            - name: MARIADB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mariadb-config
+                  key: MARIADB_DATABASE
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: MARIADB_ROOT_PASSWORD
+            - name: MARIADB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: MARIADB_USER
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: MARIADB_PASSWORD
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mariadb-admin ping -h 127.0.0.1 -uroot -p"$MARIADB_ROOT_PASSWORD"
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mariadb-admin ping -h 127.0.0.1 -uroot -p"$MARIADB_ROOT_PASSWORD"
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: mariadb-data
+              mountPath: /var/lib/mysql
+            - name: mariadb-initdb
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: mariadb-initdb
+          configMap:
+            name: mariadb-initdb
+  volumeClaimTemplates:
+    - metadata:
+        name: mariadb-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
