@@ -15,7 +15,7 @@ export function Landing() {
   return (
     <main className="landing">
       <header className="landing-nav">
-        <Logo compact />
+        <Logo />
       </header>
       <section className="hero" style={{ backgroundImage: `url(${assets.hero})` }}>
         <div className="hero-overlay" />

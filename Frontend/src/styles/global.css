@@ -24,11 +24,8 @@ button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .52; }
 
-.logo { display: inline-flex; align-items: center; gap: 12px; min-width: 0; }
-.logo img { width: 54px; height: 54px; object-fit: contain; }
-.logo span { display: grid; line-height: 1.05; }
-.logo strong { font-size: 18px; font-weight: 900; }
-.logo em { color: var(--muted); font-size: 12px; font-style: normal; margin-top: 4px; }
+.logo { display: inline-flex; align-items: center; justify-content: center; min-width: 0; }
+.logo img { width: 65px; height: 65px; object-fit: contain; }
 
 .landing { min-height: 100vh; overflow: hidden; background: #0b0b0b; }
 .landing-nav, .login-header, .topbar {
@@ -189,8 +186,8 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 
 @media (max-width: 700px) {
   .landing-nav, .login-header, .topbar { padding: 0 16px; height: 72px; }
-  .logo img { width: 44px; height: 44px; }
-  .logo em, .topbar-title { display: none; }
+  .logo img { width: 53px; height: 53px; }
+  .topbar-title { display: none; }
   .hero { min-height: calc(100vh - 188px); padding: 40px 18px; }
   .hero h1 { font-size: clamp(38px, 12vw, 58px); }
   .slide-card { width: 280px; }
