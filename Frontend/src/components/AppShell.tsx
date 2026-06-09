@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Activity, BookOpen, CalendarDays, Megaphone, UserRound } from "lucide-react";
+import { BookOpen, CalendarDays, Megaphone, UserRound } from "lucide-react";
 import { Logo } from "./Logo";
 
 const menu = [
@@ -7,7 +7,6 @@ const menu = [
   { to: "/classroom", label: "나의 강의", icon: CalendarDays },
   { to: "/profile", label: "프로필", icon: UserRound },
   { to: "/notices", label: "공지사항", icon: Megaphone },
-  { to: "/monitoring", label: "시스템 상태", icon: Activity },
 ];
 
 export function AppShell() {
@@ -35,4 +34,3 @@ export function AppShell() {
     </div>
   );
 }
-

@@ -1,21 +1,21 @@
 import { motion } from "framer-motion";
-import { Activity, ArrowRight, Gauge, Server } from "lucide-react";
+import { ArrowRight, CalendarClock, Megaphone, ServerCog } from "lucide-react";
 import { Link } from "react-router-dom";
 import { assets, brand } from "../assets";
 import { Logo } from "../components/Logo";
 
 const slides = [
-  { title: "Load Balanced", text: "Nginx Ingress · active-active routing", icon: Server },
-  { title: "Kubernetes Ready", text: "k3s cluster deployment with health checks", icon: Gauge },
-  { title: "Observable", text: "Grafana metrics · API latency · DB status", icon: Activity },
+  { title: "1차 수강신청", text: "2025.08.18 09:00부터 전공과목 신청이 시작됩니다.", icon: CalendarClock },
+  { title: "장바구니 확인", text: "관심과목 목록은 수강신청 전날 17:00까지 수정 가능합니다.", icon: Megaphone },
+  { title: "시스템 점검", text: "08.17 22:00부터 23:30까지 수강신청 시스템 점검이 예정되어 있습니다.", icon: ServerCog },
+  { title: "정정기간 안내", text: "수강정정은 09.02 10:00부터 09.04 16:00까지 진행됩니다.", icon: CalendarClock },
 ];
 
 export function Landing() {
   return (
     <main className="landing">
       <header className="landing-nav">
-        <Logo />
-        <span>{brand.host}</span>
+        <Logo compact />
       </header>
       <section className="hero" style={{ backgroundImage: `url(${assets.hero})` }}>
         <div className="hero-overlay" />
@@ -50,4 +50,3 @@ export function Landing() {
     </main>
   );
 }
-
