@@ -1,6 +1,7 @@
 export type Course = {
   id: string;
   classId?: number;
+  majorId?: number;
   major: string;
   title: string;
   desc: string;
