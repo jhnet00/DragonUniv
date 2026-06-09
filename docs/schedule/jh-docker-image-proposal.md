@@ -99,3 +99,73 @@ sudo k3s ctr images import dragon-backend.tar
 - `k8s/frontend-service.yaml` 작성
 - `k8s/backend-service.yaml` 작성
 - `k8s/ingress.yaml` 작성
+
+---
+
+## rb 확인 및 전달 내용
+
+작성일: 2026-06-09
+
+### Dockerfile 작성 완료
+
+| 서비스 | Dockerfile | 이미지 이름 | 컨테이너 포트 |
+|--------|------------|-------------|---------------|
+| Frontend | `Frontend/Dockerfile` | `dragon-frontend:latest` | `80` |
+| Backend | `Backend/Dockerfile` | `dragon-backend:latest` | `4000` |
+
+### Frontend 빌드 기준
+
+- Frontend는 Vite build 후 nginx로 정적 파일을 서빙함.
+- nginx 설정 파일: `Frontend/nginx.conf`
+- SPA 라우팅을 위해 `try_files $uri $uri/ /index.html` 설정 포함.
+- API 주소는 build arg/env `VITE_API_URL` 사용.
+- k3s Ingress에서 `/api`를 Backend로 라우팅할 예정이면 기본값 `/api` 그대로 사용 가능.
+
+```bash
+docker build -t dragon-frontend:latest ./Frontend
+```
+
+API 주소를 명시해서 빌드해야 할 경우:
+
+```bash
+docker build \
+  --build-arg VITE_API_URL=http://sugang.drg/api \
+  -t dragon-frontend:latest \
+  ./Frontend
+```
+
+### Backend 빌드 기준
+
+- Backend는 Node.js Express API로 실행.
+- 컨테이너 내부 포트는 `4000`.
+- DB 연결 정보는 manifest의 env, ConfigMap, Secret으로 주입 필요.
+
+```bash
+docker build -t dragon-backend:latest ./Backend
+```
+
+Backend에 필요한 환경변수:
+
+| 변수명 | 예시 값 |
+|--------|---------|
+| `PORT` | `4000` |
+| `DB_HOST` | `mariadb` |
+| `DB_PORT` | `3306` |
+| `DB_USER` | `dragon_app` |
+| `DB_PASSWORD` | `dragonpass` |
+| `DB_NAME` | `dragon_university` |
+| `STUDENT_NUMBER` | `20251119` |
+
+### k3s 로컬 import 전달 방식
+
+```bash
+docker save dragon-frontend:latest -o dragon-frontend.tar
+docker save dragon-backend:latest -o dragon-backend.tar
+```
+
+VM 내부에서:
+
+```bash
+sudo k3s ctr images import dragon-frontend.tar
+sudo k3s ctr images import dragon-backend.tar
+```

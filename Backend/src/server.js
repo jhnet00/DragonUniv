@@ -58,9 +58,8 @@ app.get("/api/health", async (_req, res) => {
 
 app.get("/api/student", async (_req, res, next) => {
   try {
-    const student = await getDefaultStudent(connection);
+    const student = await getDefaultStudent();
     if (!student) {
-      await connection.rollback();
       res.status(404).json({ message: "Default student not found" });
       return;
     }

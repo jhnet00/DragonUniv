@@ -16,7 +16,7 @@ export const pool = mysql.createPool({
 
 export async function getDefaultStudent(connection = pool) {
   const studentNumber = process.env.STUDENT_NUMBER ?? "20251119";
-  const [rows] = await pool.query(
+  const [rows] = await connection.query(
     `SELECT s.stu_id, s.stu_name, s.stu_num, s.email, s.max_classes, s.max_credits,
             m.major_name
        FROM students s
