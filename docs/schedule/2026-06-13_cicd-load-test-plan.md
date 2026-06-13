@@ -2,7 +2,7 @@
 
 작성일: 2026년 6월 13일  
 작성자: rb  
-목적: GitHub Actions 기반 Docker 이미지 자동 빌드/push와 k3s 환경에서 최소 부하 테스트 절차를 정리한다.
+목적: GitHub Actions, Jenkins, Terraform을 프로젝트에 단계적으로 붙이고 k3s 환경에서 최소 부하 테스트 절차를 정리한다.
 
 ---
 
@@ -42,7 +42,31 @@ rubyjeenkim/dragon-backend:latest
 
 ### 목표
 
-GitHub Actions를 사용해 코드 변경 시 Frontend/Backend 빌드 확인과 Docker Hub 이미지 push를 자동화한다.
+GitHub Actions와 Jenkins의 역할을 분리해서 CI/CD 흐름을 구성한다.
+
+```txt
+GitHub Actions: 가벼운 CI 및 Docker image build/push 기준선
+Jenkins: 실제 배포 파이프라인 실습
+Terraform: 인프라 구성 기록 및 확장 설계
+```
+
+최종 목표 흐름:
+
+```txt
+GitHub push
+-> GitHub Actions CI 확인
+-> Jenkins pipeline 실행
+-> Docker image build/push
+-> k3s rollout restart 또는 kubectl apply
+-> sugang.drg 접속 확인
+```
+
+단, 현재 실습 환경에서는 GitHub Actions workflow가 먼저 Docker Hub push까지 수행하도록 구성되어 있다.
+Jenkins를 붙이면 Docker build/push 책임을 Jenkins로 옮기거나, GitHub Actions와 Jenkins를 단계별로 나눌 수 있다.
+
+---
+
+## 3. GitHub Actions 계획
 
 ### 자동화 범위
 
@@ -99,7 +123,142 @@ sudo kubectl get pods -n dragon-univ -w
 
 ---
 
-## 3. 간단 로드밸런싱 테스트 계획
+## 4. Jenkins 구축 계획
+
+### 목표
+
+Jenkins를 사용해 실제 운영형 CI/CD 파이프라인 흐름을 실습한다.
+
+추천 역할:
+
+```txt
+GitHub Actions: PR/build 확인
+Jenkins: Docker build/push + k3s 배포 실행
+```
+
+### Jenkins 설치 위치
+
+현재 VM 1대씩 사용하는 구성을 유지한다면 Jenkins는 아래 중 하나로 구성한다.
+
+| 방식 | 장점 | 주의점 |
+|------|------|--------|
+| k3s VM에 직접 설치 | k3s 접근이 쉬움 | VM 자원 부족 가능 |
+| 별도 VM에 설치 | 역할 분리 명확 | VM 추가 필요 |
+| Docker 컨테이너로 실행 | 설치/삭제 쉬움 | Docker socket 권한 주의 |
+
+최소 실습 기준으로는 k3s VM 또는 별도 실습 VM에 Jenkins를 설치하고,
+Jenkins에서 `kubectl`로 k3s에 접근하는 방식을 사용한다.
+
+### Jenkins pipeline 단계
+
+초안:
+
+```txt
+1. GitHub repository checkout
+2. Frontend npm ci / npm run build
+3. Backend npm ci
+4. Docker Hub login
+5. Docker image build/push
+6. kubectl apply -f k3s/
+7. kubectl rollout restart deployment/frontend -n dragon-univ
+8. kubectl rollout restart deployment/backend -n dragon-univ
+9. kubectl rollout status 확인
+```
+
+### Jenkins credentials
+
+Jenkins에 아래 credential을 등록한다.
+
+```txt
+Docker Hub username/token
+GitHub access token 또는 deploy key
+kubeconfig 또는 SSH key
+```
+
+주의:
+
+- Docker Hub password 대신 access token 사용
+- kubeconfig를 저장할 경우 권한 노출 주의
+- 가능하면 Jenkins 전용 Docker Hub token 사용
+
+### Jenkinsfile 작성 방향
+
+추후 repository root에 `Jenkinsfile`을 추가한다.
+
+초기에는 단순한 scripted/ declarative pipeline으로 시작한다.
+
+```txt
+checkout
+build
+docker push
+deploy
+verify
+```
+
+멀티 아키텍처 이미지를 Jenkins에서 빌드하려면 Jenkins 서버에도 Docker buildx/QEMU 설정이 필요하다.
+설정 부담을 줄이려면 첫 단계에서는 Jenkins가 `kubectl rollout restart`만 담당하고,
+이미지 빌드/push는 GitHub Actions에 맡기는 방식도 가능하다.
+
+---
+
+## 5. Terraform 구축 계획
+
+### 목표
+
+Terraform을 사용해 인프라 구성을 코드로 표현하고,
+프로젝트 발표에서 IaC 흐름을 설명할 수 있게 만든다.
+
+현재 환경이 로컬 VM/k3s 중심이므로 처음부터 AWS 리소스를 실제 생성하기보다,
+아래 순서로 진행한다.
+
+### 1단계: Terraform 문서화
+
+`docs/schedule` 또는 `infra/terraform`에 아래 내용을 정리한다.
+
+```txt
+관리 대상
+- VM 또는 서버
+- Docker Hub image
+- k3s namespace
+- k3s manifest
+- Ingress host
+- 추후 AWS 확장 시 VPC/EC2/Security Group
+```
+
+### 2단계: Terraform 스캐폴드
+
+repository에 `infra/terraform/` 폴더를 만들고 기본 구조를 준비한다.
+
+```txt
+infra/terraform/
+  main.tf
+  variables.tf
+  outputs.tf
+  README.md
+```
+
+### 3단계: Kubernetes provider 검토
+
+k3s kubeconfig를 사용해 Terraform Kubernetes provider로 namespace, deployment, service 등을 관리할 수 있다.
+
+다만 현재 manifest가 이미 YAML로 작성되어 있으므로,
+초기에는 Terraform이 전체 manifest를 대체하기보다 구조 설계와 일부 리소스 관리 예시를 담당하게 한다.
+
+### 4단계: AWS 확장 설계
+
+프로젝트 발표용으로 아래 확장안을 정리한다.
+
+```txt
+AWS EC2: k3s node
+AWS Security Group: HTTP/HTTPS/SSH 허용
+Route 53: sugang.drg 또는 실제 도메인 연결
+ECR 또는 Docker Hub: image registry
+Terraform: EC2, Security Group, DNS, output 관리
+```
+
+---
+
+## 6. 간단 로드밸런싱 테스트 계획
 
 ### 목표
 
@@ -206,7 +365,7 @@ replica를 2개로 늘렸다면 endpoint IP가 2개 이상 보여야 한다.
 
 ---
 
-## 4. 최소 테스트 성공 기준
+## 7. 최소 테스트 성공 기준
 
 아래 조건을 만족하면 현재 단계의 간단 테스트는 성공으로 본다.
 
@@ -218,7 +377,7 @@ replica를 2개로 늘렸다면 endpoint IP가 2개 이상 보여야 한다.
 
 ---
 
-## 5. 주의 사항
+## 8. 주의 사항
 
 현재 환경에서 `-c 5000`처럼 동시 요청 5,000개를 바로 주는 것은 권장하지 않는다.
 VM CPU, 메모리, 네트워크, DB connection 한계 때문에 실제 서비스 한계보다 테스트 환경이 먼저 병목이 될 수 있다.
