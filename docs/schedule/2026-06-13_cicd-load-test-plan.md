@@ -258,7 +258,87 @@ Terraform: EC2, Security Group, DNS, output 관리
 
 ---
 
-## 6. 간단 로드밸런싱 테스트 계획
+## 6. VM 구성 계획
+
+### 결론
+
+CI/CD와 모니터링을 위해 VM을 반드시 새로 만들어야 하는 것은 아니다.
+
+다만 Jenkins와 모니터링 도구는 CPU/메모리를 계속 사용하므로,
+프로젝트 완성도와 안정성을 생각하면 역할별 VM을 분리하는 구성이 더 좋다.
+
+### 최소 구성
+
+오늘 바로 진행 가능한 최소 구성:
+
+```txt
+VM 1: k3s
+- Frontend Pod
+- Backend Pod
+- MariaDB Pod
+- Traefik Ingress
+
+Mac 또는 로컬:
+- GitHub Actions 설정
+- Docker Desktop
+- 문서 작업
+```
+
+이 구성에서는 Jenkins와 모니터링을 아직 설치하지 않고,
+GitHub Actions로 이미지 build/push 후 k3s VM에서 수동 rollout을 실행한다.
+
+장점:
+
+- 추가 VM이 필요 없음
+- 가장 빠르게 CI/CD 흐름을 확인 가능
+- 현재 환경을 크게 건드리지 않음
+
+단점:
+
+- Jenkins 실습 범위가 부족함
+- Prometheus/Grafana까지 올리면 k3s VM이 무거워질 수 있음
+
+### 권장 구성
+
+Jenkins와 모니터링까지 붙일 경우 권장 구성:
+
+```txt
+VM 1: k3s runtime
+- Frontend
+- Backend
+- MariaDB
+- Traefik Ingress
+
+VM 2: CI/CD
+- Jenkins
+- Docker CLI 또는 Docker Engine
+- kubectl
+
+선택 VM 3: Monitoring
+- Prometheus
+- Grafana
+```
+
+VM을 2대까지만 쓸 수 있다면 Jenkins와 모니터링을 같은 VM에 두거나,
+모니터링은 k3s 내부에 Helm chart로 설치한다.
+
+### 현실적인 프로젝트 선택
+
+현재 프로젝트에서는 아래 순서를 권장한다.
+
+```txt
+1. VM 추가 없이 GitHub Actions + k3s 수동 rollout 확인
+2. Jenkins용 VM 1대 추가
+3. Jenkins에서 k3s rollout 실행
+4. 시간이 남으면 Prometheus/Grafana를 k3s 내부에 설치
+5. Terraform은 infra/terraform 스캐폴드와 AWS 확장 설계부터 작성
+```
+
+즉, 당장 새 VM이 필수는 아니지만 Jenkins를 제대로 보여주려면 CI/CD VM 1대는 추가하는 것이 좋다.
+
+---
+
+## 7. 간단 로드밸런싱 테스트 계획
 
 ### 목표
 
@@ -365,7 +445,7 @@ replica를 2개로 늘렸다면 endpoint IP가 2개 이상 보여야 한다.
 
 ---
 
-## 7. 최소 테스트 성공 기준
+## 8. 최소 테스트 성공 기준
 
 아래 조건을 만족하면 현재 단계의 간단 테스트는 성공으로 본다.
 
@@ -377,7 +457,7 @@ replica를 2개로 늘렸다면 endpoint IP가 2개 이상 보여야 한다.
 
 ---
 
-## 8. 주의 사항
+## 9. 주의 사항
 
 현재 환경에서 `-c 5000`처럼 동시 요청 5,000개를 바로 주는 것은 권장하지 않는다.
 VM CPU, 메모리, 네트워크, DB connection 한계 때문에 실제 서비스 한계보다 테스트 환경이 먼저 병목이 될 수 있다.
