@@ -14,12 +14,8 @@ const nodes = [
 
 const grafanaPanels = [
   {
-    title: "k3s CPU / Load",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&var-job=node-exporter&var-node=192.168.232.133:9100&panelId=20",
-  },
-  {
-    title: "k3s Memory",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&var-job=node-exporter&var-node=192.168.232.133:9100&panelId=16",
+    title: "k3s CPU Basic",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-77",
   },
 ];
 
