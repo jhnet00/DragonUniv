@@ -12,40 +12,7 @@ const nodes = [
   { name: "dragon-monitoring", role: "Prometheus / Grafana", ip: "192.168.232.135", endpoint: ":9090 / :3000 / :9100", state: "UP" },
 ];
 
-const grafanaPanels = [
-  {
-    title: "CPU",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-3",
-  },
-  {
-    title: "Memory",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-24",
-  },
-  {
-    title: "Network Traffic",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-84",
-  },
-  {
-    title: "Network Saturation",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-338",
-  },
-  {
-    title: "Disk IOPS",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-229",
-  },
-  {
-    title: "Filesystem Space Available",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-43",
-  },
-  {
-    title: "Disk I/O Utilization",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-127",
-  },
-  {
-    title: "Pressure Stall Information",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-322",
-  },
-];
+const publicDashboardUrl = "http://192.168.232.135:3000/public-dashboards/68ec4f29b6414f1088b09e464361a688";
 
 export function Monitoring() {
   return (
@@ -109,19 +76,15 @@ export function Monitoring() {
         </article>
       </div>
 
-      <div className="grafana-panel-grid">
-        {grafanaPanels.map((panel) => (
-          <article className="grafana-panel-card" key={panel.title}>
-            <div className="grafana-panel-head">
-              <h2>{panel.title}</h2>
-              <a href={panel.src} target="_blank" rel="noreferrer" aria-label={`${panel.title} Grafana panel`}>
-                <ExternalLink size={16} />
-              </a>
-            </div>
-            <iframe title={panel.title} src={panel.src} loading="lazy" />
-          </article>
-        ))}
-      </div>
+      <article className="grafana-panel-card grafana-dashboard-card">
+        <div className="grafana-panel-head">
+          <h2>Grafana Public Dashboard</h2>
+          <a href={publicDashboardUrl} target="_blank" rel="noreferrer" aria-label="Open Grafana public dashboard">
+            <ExternalLink size={16} />
+          </a>
+        </div>
+        <iframe title="Grafana public dashboard" src={publicDashboardUrl} loading="lazy" />
+      </article>
 
       <div className="diagram monitoring-flow">
         <div><Server /> dragon-k3s</div><span />

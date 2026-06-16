@@ -9,12 +9,12 @@
 
 현재 `/admin/monitoring` 화면은 Grafana/Prometheus 바로가기와 VM 상태 정보를 보여준다.
 
-다음 목표는 Grafana의 Node Exporter dashboard 패널을 iframe으로 불러와,
-관리자 화면 안에서 k3s VM CPU/Memory 지표를 바로 확인하는 것이다.
+다음 목표는 Grafana의 Node Exporter dashboard를 iframe으로 불러와,
+관리자 화면 안에서 k3s VM CPU/Memory/Disk/Network 지표를 바로 확인하는 것이다.
 
 ```txt
 /admin/monitoring
--> Grafana panel iframe
+-> Grafana public dashboard iframe
 -> Prometheus data source
 -> dragon-k3s node-exporter
 ```
@@ -30,25 +30,20 @@ Frontend/src/pages/Monitoring.tsx
 Frontend/src/styles/global.css
 ```
 
-`Monitoring.tsx`에 `grafanaPanels` 배열을 추가했다.
+처음에는 `d-solo` 개별 패널 iframe을 사용했지만,
+시크릿 창과 프론트 iframe에서 `Forbidden`이 발생했다.
+
+따라서 Grafana의 public dashboard external link를 사용하도록 변경했다.
 
 ```ts
-const grafanaPanels = [
-  {
-    title: "k3s CPU / Load",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&var-job=node-exporter&var-node=192.168.232.133:9100&panelId=20",
-  },
-  {
-    title: "k3s Memory",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&var-job=node-exporter&var-node=192.168.232.133:9100&panelId=16",
-  },
-];
+const publicDashboardUrl = "http://192.168.232.135:3000/public-dashboards/68ec4f29b6414f1088b09e464361a688";
 ```
 
 주의:
 
-- 위 `panelId`는 Node Exporter Full dashboard의 환경에 따라 다를 수 있다.
-- 실제 Grafana에서 각 패널의 `Share -> Embed` URL을 복사해 `src`에 교체하는 것이 가장 정확하다.
+- Grafana에서 복사한 URL이 `localhost:3000`이면 프론트에서는 사용할 수 없다.
+- 브라우저 기준 `localhost`는 사용자의 현재 PC이므로 `192.168.232.135:3000`으로 바꿔야 한다.
+- public dashboard는 외부 공유 링크이므로 실습/발표용 내부망에서만 사용한다.
 
 ---
 
@@ -68,12 +63,13 @@ sudo nano /etc/grafana/grafana.ini
 allow_embedding = true
 ```
 
-로그인 없이 `/admin/monitoring` iframe에서 Grafana 패널을 바로 보려면 anonymous access도 필요할 수 있다.
-실습/발표용 내부망에서만 사용한다.
+개별 `d-solo` 패널을 로그인 없이 보려면 anonymous access도 필요할 수 있다.
+하지만 현재 환경에서는 anonymous 설정 후에도 dashboard 접근이 제한되어 public dashboard link를 사용했다.
 
 ```ini
 [auth.anonymous]
 enabled = true
+org_name = Main Org.
 org_role = Viewer
 ```
 
@@ -86,7 +82,7 @@ sudo systemctl status grafana-server
 
 ---
 
-## 4. Grafana 패널 URL 가져오기
+## 4. Public dashboard URL 가져오기
 
 Grafana 접속:
 
@@ -103,16 +99,28 @@ job = node-exporter
 instance = 192.168.232.133:9100
 ```
 
-패널 embed URL 복사:
+대시보드 public link 복사:
 
 ```txt
-Panel title 클릭
--> Share
--> Embed
--> iframe src URL 복사
+Dashboard 상단 Share
+-> Public dashboard 또는 Share externally
+-> Public dashboard 생성
+-> External link 복사
 ```
 
-복사한 URL을 `Monitoring.tsx`의 `grafanaPanels[].src` 값으로 교체한다.
+복사한 URL 예시:
+
+```txt
+http://localhost:3000/public-dashboards/68ec4f29b6414f1088b09e464361a688
+```
+
+프론트에서는 아래처럼 VM IP로 바꿔 사용한다.
+
+```txt
+http://192.168.232.135:3000/public-dashboards/68ec4f29b6414f1088b09e464361a688
+```
+
+복사한 URL을 `Monitoring.tsx`의 `publicDashboardUrl` 값으로 교체한다.
 
 ---
 
@@ -135,8 +143,8 @@ http://127.0.0.1:5174/admin/monitoring
 
 - Grafana/Prometheus/Targets 버튼이 보임
 - VM 카드가 보임
-- Grafana iframe 패널 2개가 보임
-- CPU/Memory 계열 그래프가 표시됨
+- Grafana public dashboard iframe이 보임
+- CPU/Memory/Disk/Network 계열 그래프가 표시됨
 
 ---
 
@@ -151,6 +159,7 @@ Grafana allow_embedding 미설정
 Grafana login 필요
 anonymous access 미설정
 panel src URL 오류
+public dashboard 미활성화
 ```
 
 해결:
@@ -159,6 +168,22 @@ panel src URL 오류
 allow_embedding = true
 anonymous Viewer 임시 허용
 Grafana Share -> Embed에서 URL 재복사
+Public dashboard external link 사용
+```
+
+### d-solo 패널은 일반 창에서 열리는데 시크릿 창에서 Forbidden
+
+원인:
+
+```txt
+일반 창은 Grafana 로그인 세션이 있어서 접근 가능
+시크릿 창과 iframe은 로그인 세션이 없어 dashboard 권한 제한
+```
+
+해결:
+
+```txt
+개별 d-solo 패널 대신 public dashboard external link 사용
 ```
 
 ### No data
