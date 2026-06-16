@@ -167,6 +167,21 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 .detail-grid strong { color: #fff; }
 .diagram { display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; gap: 12px; padding: 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .diagram div { min-height: 92px; display: grid; place-items: center; gap: 8px; border: 1px solid rgba(201,168,106,.26); border-radius: 8px; background: rgba(255,255,255,.04); }
+.monitoring-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.monitoring-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 14px; }
+.monitor-node-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: start; min-height: 150px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: 0 18px 50px rgba(0,0,0,.2); }
+.monitor-node-card h2 { margin: 12px 0 4px; font-size: 24px; }
+.monitor-node-card p { margin: 0; color: var(--muted); }
+.monitor-node-card dl { min-width: 210px; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.04); }
+.monitor-node-card dl div + div { margin-top: 12px; }
+.monitor-node-card dd { overflow-wrap: anywhere; }
+.monitoring-layout { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 14px; }
+.monitoring-facts { display: grid; gap: 10px; margin-top: 18px; }
+.monitoring-facts span { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: rgba(255,255,255,.04); }
+.monitoring-facts strong { color: #fff; }
+.query-chip { display: block; margin-top: 16px; padding: 14px; border: 1px solid rgba(201,168,106,.26); border-radius: 8px; color: #f6dbe3; background: rgba(0,0,0,.26); overflow-x: auto; }
+.monitoring-flow div { min-height: 108px; }
+.monitoring-flow.secondary { background: rgba(245,245,245,.035); }
 .not-found { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 14px; text-align: center; }
 .not-found h1 { margin: 0; font-size: 92px; }
 
@@ -181,6 +196,9 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   .course-list-actions { justify-items: start; }
   .form-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
   .profile-layout, .two-col { grid-template-columns: 1fr; }
+  .monitoring-grid, .monitoring-layout { grid-template-columns: 1fr; }
+  .monitor-node-card { grid-template-columns: 1fr; }
+  .monitor-node-card dl { min-width: 0; }
 }
 
 @media (max-width: 700px) {
@@ -194,6 +212,9 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   .sidebar { top: 86px; }
   .page-head { display: grid; }
   .status-grid, .admin-metrics, .course-grid, .detail-grid, .diagram { grid-template-columns: 1fr; }
+  .monitoring-actions { justify-content: stretch; }
+  .monitoring-actions a { flex: 1 1 140px; }
+  .monitoring-facts span { align-items: flex-start; flex-direction: column; padding: 10px 12px; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .wide { grid-column: auto; }
   .form-actions, .form-title { align-items: stretch; flex-direction: column; }
