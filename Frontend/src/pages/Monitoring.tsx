@@ -12,6 +12,17 @@ const nodes = [
   { name: "dragon-monitoring", role: "Prometheus / Grafana", ip: "192.168.232.135", endpoint: ":9090 / :3000 / :9100", state: "UP" },
 ];
 
+const grafanaPanels = [
+  {
+    title: "k3s CPU / Load",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&var-job=node-exporter&var-node=192.168.232.133:9100&panelId=20",
+  },
+  {
+    title: "k3s Memory",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&var-job=node-exporter&var-node=192.168.232.133:9100&panelId=16",
+  },
+];
+
 export function Monitoring() {
   return (
     <section className="page-stack">
@@ -72,6 +83,20 @@ export function Monitoring() {
             <span><strong>Target</strong>dragon-k3s</span>
           </div>
         </article>
+      </div>
+
+      <div className="grafana-panel-grid">
+        {grafanaPanels.map((panel) => (
+          <article className="grafana-panel-card" key={panel.title}>
+            <div className="grafana-panel-head">
+              <h2>{panel.title}</h2>
+              <a href={panel.src} target="_blank" rel="noreferrer" aria-label={`${panel.title} Grafana panel`}>
+                <ExternalLink size={16} />
+              </a>
+            </div>
+            <iframe title={panel.title} src={panel.src} loading="lazy" />
+          </article>
+        ))}
       </div>
 
       <div className="diagram monitoring-flow">

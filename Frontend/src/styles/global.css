@@ -180,6 +180,12 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 .monitoring-facts span { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: rgba(255,255,255,.04); }
 .monitoring-facts strong { color: #fff; }
 .query-chip { display: block; margin-top: 16px; padding: 14px; border: 1px solid rgba(201,168,106,.26); border-radius: 8px; color: #f6dbe3; background: rgba(0,0,0,.26); overflow-x: auto; }
+.grafana-panel-grid { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 14px; }
+.grafana-panel-card { min-width: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); box-shadow: 0 18px 50px rgba(0,0,0,.2); }
+.grafana-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 14px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.04); }
+.grafana-panel-head h2 { margin: 0; font-size: 16px; }
+.grafana-panel-head a { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); }
+.grafana-panel-card iframe { display: block; width: 100%; height: 340px; border: 0; background: #111; }
 .monitoring-flow div { min-height: 108px; }
 .monitoring-flow.secondary { background: rgba(245,245,245,.035); }
 .not-found { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 14px; text-align: center; }
@@ -196,7 +202,7 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   .course-list-actions { justify-items: start; }
   .form-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
   .profile-layout, .two-col { grid-template-columns: 1fr; }
-  .monitoring-grid, .monitoring-layout { grid-template-columns: 1fr; }
+  .monitoring-grid, .monitoring-layout, .grafana-panel-grid { grid-template-columns: 1fr; }
   .monitor-node-card { grid-template-columns: 1fr; }
   .monitor-node-card dl { min-width: 0; }
 }
@@ -215,6 +221,7 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   .monitoring-actions { justify-content: stretch; }
   .monitoring-actions a { flex: 1 1 140px; }
   .monitoring-facts span { align-items: flex-start; flex-direction: column; padding: 10px 12px; }
+  .grafana-panel-card iframe { height: 300px; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .wide { grid-column: auto; }
   .form-actions, .form-title { align-items: stretch; flex-direction: column; }
