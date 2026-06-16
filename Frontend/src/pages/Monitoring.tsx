@@ -14,8 +14,36 @@ const nodes = [
 
 const grafanaPanels = [
   {
-    title: "k3s CPU Basic",
-    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-77",
+    title: "CPU",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-3",
+  },
+  {
+    title: "Memory",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-24",
+  },
+  {
+    title: "Network Traffic",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-84",
+  },
+  {
+    title: "Network Saturation",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-338",
+  },
+  {
+    title: "Disk IOPS",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-229",
+  },
+  {
+    title: "Filesystem Space Available",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-43",
+  },
+  {
+    title: "Disk I/O Utilization",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-127",
+  },
+  {
+    title: "Pressure Stall Information",
+    src: "http://192.168.232.135:3000/d-solo/rYdddlPWk/node-exporter-full?orgId=1&from=now-1h&to=now&timezone=browser&var-ds_prometheus=efpa9ay6wsef4a&var-job=node-exporter&var-nodename=dragon-monitoring&var-node=192.168.232.133:9100&refresh=1m&panelId=panel-322",
   },
 ];
 
