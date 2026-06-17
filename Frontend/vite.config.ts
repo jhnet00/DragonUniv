@@ -10,6 +10,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/prometheus/, ""),
       },
+      "/node-exporter": {
+        target: "http://192.168.232.133:9100",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/node-exporter/, ""),
+      },
     },
   },
 });

@@ -13,73 +13,73 @@ const nodes = [
   { name: "dragon-monitoring", role: "Prometheus / Grafana", ip: "192.168.232.135", endpoint: ":9090 / :3000 / :9100", state: "UP" },
 ];
 
-type PrometheusResult = {
-  status: string;
-  data?: {
-    result?: Array<{ value?: [number, string] }>;
-  };
-};
-
 type LiveMetric = {
   key: string;
   label: string;
-  query: string;
   unit: string;
   max: number;
   value: number | null;
 };
 
-const metricQueries: Omit<LiveMetric, "value">[] = [
-  {
-    key: "cpu",
-    label: "CPU Usage",
-    unit: "%",
-    max: 100,
-    query: '100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)',
-  },
-  {
-    key: "memory",
-    label: "Memory Usage",
-    unit: "%",
-    max: 100,
-    query: '(1 - sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes)) * 100',
-  },
-  {
-    key: "disk",
-    label: "Root Disk Used",
-    unit: "%",
-    max: 100,
-    query: '100 - (100 * sum(node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}) / sum(node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}))',
-  },
-  {
-    key: "load",
-    label: "Load Average",
-    unit: "",
-    max: 2,
-    query: 'avg(node_load1)',
-  },
-  {
-    key: "rx",
-    label: "Network RX",
-    unit: "KB/s",
-    max: 1024,
-    query: 'sum(rate(node_network_receive_bytes_total{device!~"lo|veth.*|docker.*|flannel.*|cni.*"}[5m])) / 1024',
-  },
-  {
-    key: "tx",
-    label: "Network TX",
-    unit: "KB/s",
-    max: 1024,
-    query: 'sum(rate(node_network_transmit_bytes_total{device!~"lo|veth.*|docker.*|flannel.*|cni.*"}[5m])) / 1024',
-  },
+const initialMetrics: LiveMetric[] = [
+  { key: "load", label: "Load Average", unit: "", max: 2, value: null },
+  { key: "memory", label: "Memory Usage", unit: "%", max: 100, value: null },
+  { key: "disk", label: "Root Disk Used", unit: "%", max: 100, value: null },
+  { key: "rx", label: "Network RX Total", unit: "MB", max: 1024, value: null },
+  { key: "tx", label: "Network TX Total", unit: "MB", max: 1024, value: null },
 ];
 
-async function fetchPrometheusValue(query: string) {
-  const response = await fetch(`/prometheus/api/v1/query?query=${encodeURIComponent(query)}`);
-  if (!response.ok) throw new Error(`Prometheus query failed: ${response.status}`);
-  const payload = (await response.json()) as PrometheusResult;
-  const rawValue = payload.data?.result?.[0]?.value?.[1];
+function readMetric(metrics: string, name: string, labelIncludes?: string[]) {
+  const line = metrics
+    .split("\n")
+    .find((entry) => entry.startsWith(name) && labelIncludes?.every((label) => entry.includes(label)) !== false);
+  const rawValue = line?.trim().split(/\s+/).at(-1);
   return rawValue ? Number(rawValue) : null;
+}
+
+function sumMetric(metrics: string, name: string, excludePattern: RegExp) {
+  return metrics
+    .split("\n")
+    .filter((entry) => entry.startsWith(name) && !excludePattern.test(entry))
+    .reduce((sum, entry) => {
+      const rawValue = entry.trim().split(/\s+/).at(-1);
+      return sum + (rawValue ? Number(rawValue) : 0);
+    }, 0);
+}
+
+async function fetchNodeExporterMetrics(): Promise<LiveMetric[]> {
+  const response = await fetch("/node-exporter/metrics");
+  if (!response.ok) throw new Error(`node-exporter fetch failed: ${response.status}`);
+  const metrics = await response.text();
+
+  const load = readMetric(metrics, "node_load1");
+  const memoryTotal = readMetric(metrics, "node_memory_MemTotal_bytes");
+  const memoryAvailable = readMetric(metrics, "node_memory_MemAvailable_bytes");
+  const diskSize = readMetric(metrics, "node_filesystem_size_bytes", ['mountpoint="/"']);
+  const diskAvailable = readMetric(metrics, "node_filesystem_avail_bytes", ['mountpoint="/"']);
+  const networkExclude = /device="(lo|veth[^"]*|docker[^"]*|flannel[^"]*|cni[^"]*)"/;
+  const rxMb = sumMetric(metrics, "node_network_receive_bytes_total", networkExclude) / 1024 / 1024;
+  const txMb = sumMetric(metrics, "node_network_transmit_bytes_total", networkExclude) / 1024 / 1024;
+
+  return [
+    { key: "load", label: "Load Average", unit: "", max: 2, value: load },
+    {
+      key: "memory",
+      label: "Memory Usage",
+      unit: "%",
+      max: 100,
+      value: memoryTotal && memoryAvailable ? (1 - memoryAvailable / memoryTotal) * 100 : null,
+    },
+    {
+      key: "disk",
+      label: "Root Disk Used",
+      unit: "%",
+      max: 100,
+      value: diskSize && diskAvailable ? (1 - diskAvailable / diskSize) * 100 : null,
+    },
+    { key: "rx", label: "Network RX Total", unit: "MB", max: 1024, value: rxMb },
+    { key: "tx", label: "Network TX Total", unit: "MB", max: 1024, value: txMb },
+  ];
 }
 
 function formatMetricValue(value: number | null, unit: string) {
@@ -89,9 +89,7 @@ function formatMetricValue(value: number | null, unit: string) {
 }
 
 export function Monitoring() {
-  const [liveMetrics, setLiveMetrics] = useState<LiveMetric[]>(
-    metricQueries.map((metric) => ({ ...metric, value: null })),
-  );
+  const [liveMetrics, setLiveMetrics] = useState<LiveMetric[]>(initialMetrics);
   const [lastUpdated, setLastUpdated] = useState("Loading");
   const [loadError, setLoadError] = useState("");
 
@@ -100,9 +98,9 @@ export function Monitoring() {
 
     async function loadMetrics() {
       try {
-        const values = await Promise.all(metricQueries.map((metric) => fetchPrometheusValue(metric.query)));
+        const metrics = await fetchNodeExporterMetrics();
         if (!mounted) return;
-        setLiveMetrics(metricQueries.map((metric, index) => ({ ...metric, value: values[index] })));
+        setLiveMetrics(metrics);
         setLastUpdated(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
         setLoadError("");
       } catch (error) {
@@ -162,10 +160,10 @@ export function Monitoring() {
       <div className="monitoring-layout">
         <article className="glass-panel">
           <h2><BarChart3 size={20} /> Live Metrics</h2>
-          <p>Prometheus API를 통해 dragon-k3s node-exporter 값을 직접 표시한다.</p>
+          <p>dragon-k3s node-exporter 원천 지표를 직접 읽어 현재 상태를 표시한다.</p>
           <div className="monitoring-facts">
             <span><strong>Job</strong>node-exporter</span>
-            <span><strong>Source</strong>Prometheus API</span>
+            <span><strong>Source</strong>192.168.232.133:9100</span>
             <span><strong>Updated</strong>{lastUpdated}</span>
           </div>
         </article>
