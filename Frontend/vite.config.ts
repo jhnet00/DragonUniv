@@ -3,5 +3,18 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react],
+  server: {
+    proxy: {
+      "/prometheus": {
+        target: "http://192.168.232.135:9090",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/prometheus/, ""),
+      },
+      "/node-exporter": {
+        target: "http://192.168.232.133:9100",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/node-exporter/, ""),
+      },
+    },
+  },
 });
-

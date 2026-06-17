@@ -4,9 +4,9 @@ import { Logo } from "./Logo";
 
 const menu = [
   { to: "/admin", label: "대시보드", icon: Gauge },
+  { to: "/admin/monitoring", label: "시스템 모니터링", icon: Activity },
   { to: "/admin/courses", label: "강의 관리", icon: BookOpen },
   { to: "/admin/notice", label: "공지 관리", icon: Megaphone },
-  { to: "/admin/monitoring", label: "시스템 모니터링", icon: Activity },
 ];
 
 export function AdminShell() {
