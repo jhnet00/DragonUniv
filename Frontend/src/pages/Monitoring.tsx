@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, BarChart3, CheckCircle2, Database, ExternalLink, MonitorCog, Server } from "lucide-react";
 import { MetricCard } from "../components/MetricCard";
 
@@ -13,6 +13,9 @@ const nodes = [
   { name: "dragon-monitoring", role: "Prometheus / Grafana", ip: "192.168.232.135", endpoint: ":9090 / :3000 / :9100", state: "UP" },
 ];
 
+type RiskLevel = "low" | "medium" | "high" | "unknown";
+type MetricSource = "Prometheus" | "Exporter fallback" | "Loading";
+
 type LiveMetric = {
   key: string;
   label: string;
@@ -21,27 +24,122 @@ type LiveMetric = {
   value: number | null;
   description: string;
   detail: string;
+  query: string;
+  source: MetricSource;
   risk: RiskLevel;
 };
 
-type RiskLevel = "low" | "medium" | "high" | "unknown";
+type PrometheusTarget = {
+  scrapeUrl: string;
+  health: "up" | "down" | "unknown";
+  scrapePool: string;
+  lastScrape: string;
+  lastError: string;
+  labels: Record<string, string>;
+};
 
-const initialMetrics: LiveMetric[] = [
-  { key: "load", label: "Load Average", unit: "", max: 2, value: null, description: "최근 1분 시스템 부하", detail: "node_load1", risk: "unknown" },
-  { key: "memory", label: "Memory Usage", unit: "%", max: 100, value: null, description: "사용 중인 메모리 비율", detail: "MemTotal / MemAvailable", risk: "unknown" },
-  { key: "disk", label: "Root Disk Used", unit: "%", max: 100, value: null, description: "루트 파일시스템 사용률", detail: "mountpoint=/", risk: "unknown" },
-  { key: "uptime", label: "Uptime", unit: "h", max: 168, value: null, description: "노드가 재시작 없이 동작한 시간", detail: "node_boot_time_seconds", risk: "unknown" },
-  { key: "rx", label: "Network RX Total", unit: "MB", max: 1024, value: null, description: "수신 누적 트래픽", detail: "loopback/CNI 계열 제외", risk: "unknown" },
-  { key: "tx", label: "Network TX Total", unit: "MB", max: 1024, value: null, description: "송신 누적 트래픽", detail: "loopback/CNI 계열 제외", risk: "unknown" },
-  { key: "running", label: "Running Procs", unit: "", max: 20, value: null, description: "현재 실행 대기 중인 프로세스", detail: "node_procs_running", risk: "unknown" },
-  { key: "blocked", label: "Blocked Procs", unit: "", max: 5, value: null, description: "I/O 등으로 block된 프로세스", detail: "node_procs_blocked", risk: "unknown" },
-];
+type PrometheusTargetResponse = {
+  status: string;
+  data?: {
+    activeTargets?: Array<{
+      scrapeUrl: string;
+      health: "up" | "down" | "unknown";
+      scrapePool: string;
+      lastScrape: string;
+      lastError: string;
+      labels: Record<string, string>;
+    }>;
+  };
+};
+
+type PrometheusQueryResponse = {
+  status: string;
+  data?: {
+    result?: Array<{ value?: [number, string] }>;
+  };
+};
+
+const metricDefinitions = [
+  {
+    key: "load",
+    label: "Load Average",
+    unit: "",
+    max: 2,
+    description: "최근 1분 시스템 부하",
+    query: "node_load1",
+  },
+  {
+    key: "memory",
+    label: "Memory Usage",
+    unit: "%",
+    max: 100,
+    description: "사용 중인 메모리 비율",
+    query: "100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))",
+  },
+  {
+    key: "disk",
+    label: "Root Disk Used",
+    unit: "%",
+    max: 100,
+    description: "루트 파일시스템 사용률",
+    query: '100 * (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}))',
+  },
+  {
+    key: "uptime",
+    label: "Uptime",
+    unit: "h",
+    max: 168,
+    description: "노드가 재시작 없이 동작한 시간",
+    query: "(time() - node_boot_time_seconds) / 3600",
+  },
+  {
+    key: "rx",
+    label: "Network RX Total",
+    unit: "MB",
+    max: 1024,
+    description: "수신 누적 트래픽",
+    query: 'sum(node_network_receive_bytes_total{device!~"lo|veth.*|docker.*|flannel.*|cni.*"}) / 1024 / 1024',
+  },
+  {
+    key: "tx",
+    label: "Network TX Total",
+    unit: "MB",
+    max: 1024,
+    description: "송신 누적 트래픽",
+    query: 'sum(node_network_transmit_bytes_total{device!~"lo|veth.*|docker.*|flannel.*|cni.*"}) / 1024 / 1024',
+  },
+  {
+    key: "running",
+    label: "Running Procs",
+    unit: "",
+    max: 20,
+    description: "현재 실행 대기 중인 프로세스",
+    query: "node_procs_running",
+  },
+  {
+    key: "blocked",
+    label: "Blocked Procs",
+    unit: "",
+    max: 5,
+    description: "I/O 등으로 block된 프로세스",
+    query: "node_procs_blocked",
+  },
+] as const;
+
+const initialMetrics: LiveMetric[] = metricDefinitions.map((metric) => ({
+  ...metric,
+  value: null,
+  detail: metric.query,
+  source: "Loading",
+  risk: "unknown",
+}));
 
 function readMetric(metrics: string, name: string, labelIncludes?: string[]) {
   const line = metrics
     .split("\n")
     .find((entry) => entry.startsWith(name) && labelIncludes?.every((label) => entry.includes(label)) !== false);
-  const rawValue = line?.trim().split(/\s+/).at(-1);
+  const parts = line?.trim().split(/\s+/);
+  const rawValue = parts?.[parts.length - 1];
   return rawValue ? Number(rawValue) : null;
 }
 
@@ -50,7 +148,8 @@ function sumMetric(metrics: string, name: string, excludePattern: RegExp) {
     .split("\n")
     .filter((entry) => entry.startsWith(name) && !excludePattern.test(entry))
     .reduce((sum, entry) => {
-      const rawValue = entry.trim().split(/\s+/).at(-1);
+      const parts = entry.trim().split(/\s+/);
+      const rawValue = parts[parts.length - 1];
       return sum + (rawValue ? Number(rawValue) : 0);
     }, 0);
 }
@@ -77,11 +176,48 @@ function riskFor(metricKey: string, value: number | null) {
     if (value >= 8) return "medium";
     return "low";
   }
+  if (metricKey === "rx" || metricKey === "tx") {
+    if (value >= 1024) return "high";
+    if (value >= 512) return "medium";
+    return "low";
+  }
   return "low";
 }
 
 function withRisk(metric: Omit<LiveMetric, "risk">): LiveMetric {
   return { ...metric, risk: riskFor(metric.key, metric.value) };
+}
+
+async function fetchPrometheusTargets(): Promise<PrometheusTarget[]> {
+  const response = await fetch("/prometheus/api/v1/targets");
+  if (!response.ok) throw new Error(`prometheus targets failed: ${response.status}`);
+  const payload = (await response.json()) as PrometheusTargetResponse;
+  if (payload.status !== "success") throw new Error("prometheus targets response is not success");
+  return payload.data?.activeTargets ?? [];
+}
+
+async function queryPrometheusValue(query: string) {
+  const response = await fetch(`/prometheus/api/v1/query?query=${encodeURIComponent(query)}`);
+  if (!response.ok) throw new Error(`prometheus query failed: ${response.status}`);
+  const payload = (await response.json()) as PrometheusQueryResponse;
+  const rawValue = payload.data?.result?.[0]?.value?.[1];
+  return rawValue ? Number(rawValue) : null;
+}
+
+async function fetchPrometheusMetrics(): Promise<LiveMetric[]> {
+  const values = await Promise.all(metricDefinitions.map((metric) => queryPrometheusValue(metric.query)));
+  if (values.every((value) => value === null || Number.isNaN(value))) {
+    throw new Error("Prometheus query returned no node metrics");
+  }
+
+  return metricDefinitions.map((metric, index) =>
+    withRisk({
+      ...metric,
+      value: values[index],
+      detail: metric.query,
+      source: "Prometheus",
+    }),
+  );
 }
 
 async function fetchNodeExporterMetrics(): Promise<LiveMetric[]> {
@@ -101,40 +237,29 @@ async function fetchNodeExporterMetrics(): Promise<LiveMetric[]> {
   const rxMb = sumMetric(metrics, "node_network_receive_bytes_total", networkExclude) / 1024 / 1024;
   const txMb = sumMetric(metrics, "node_network_transmit_bytes_total", networkExclude) / 1024 / 1024;
 
-  return [
-    withRisk({ key: "load", label: "Load Average", unit: "", max: 2, value: load, description: "최근 1분 시스템 부하", detail: "node_load1" }),
+  const fallbackValues: Record<string, number | null> = {
+    load,
+    memory: memoryTotal && memoryAvailable ? (1 - memoryAvailable / memoryTotal) * 100 : null,
+    disk: diskSize && diskAvailable ? (1 - diskAvailable / diskSize) * 100 : null,
+    uptime: bootTime ? (Date.now() / 1000 - bootTime) / 3600 : null,
+    rx: rxMb,
+    tx: txMb,
+    running,
+    blocked,
+  };
+
+  return metricDefinitions.map((metric) =>
     withRisk({
-      key: "memory",
-      label: "Memory Usage",
-      unit: "%",
-      max: 100,
-      value: memoryTotal && memoryAvailable ? (1 - memoryAvailable / memoryTotal) * 100 : null,
-      description: "사용 중인 메모리 비율",
-      detail: `${formatBytes(memoryTotal)} total / ${formatBytes(memoryAvailable)} available`,
+      ...metric,
+      value: fallbackValues[metric.key],
+      detail: metric.key === "memory"
+        ? `${formatBytes(memoryTotal)} total / ${formatBytes(memoryAvailable)} available`
+        : metric.key === "disk"
+          ? `${formatBytes(diskSize)} size / ${formatBytes(diskAvailable)} available`
+          : metric.query,
+      source: "Exporter fallback",
     }),
-    withRisk({
-      key: "disk",
-      label: "Root Disk Used",
-      unit: "%",
-      max: 100,
-      value: diskSize && diskAvailable ? (1 - diskAvailable / diskSize) * 100 : null,
-      description: "루트 파일시스템 사용률",
-      detail: `${formatBytes(diskSize)} size / ${formatBytes(diskAvailable)} available`,
-    }),
-    withRisk({
-      key: "uptime",
-      label: "Uptime",
-      unit: "h",
-      max: 168,
-      value: bootTime ? (Date.now() / 1000 - bootTime) / 3600 : null,
-      description: "노드가 재시작 없이 동작한 시간",
-      detail: "높을수록 안정적으로 유지 중",
-    }),
-    withRisk({ key: "rx", label: "Network RX Total", unit: "MB", max: 1024, value: rxMb, description: "수신 누적 트래픽", detail: "loopback/CNI 계열 제외" }),
-    withRisk({ key: "tx", label: "Network TX Total", unit: "MB", max: 1024, value: txMb, description: "송신 누적 트래픽", detail: "loopback/CNI 계열 제외" }),
-    withRisk({ key: "running", label: "Running Procs", unit: "", max: 20, value: running, description: "현재 실행 대기 중인 프로세스", detail: "node_procs_running" }),
-    withRisk({ key: "blocked", label: "Blocked Procs", unit: "", max: 5, value: blocked, description: "I/O 등으로 block된 프로세스", detail: "node_procs_blocked" }),
-  ];
+  );
 }
 
 function formatBytes(value: number | null) {
@@ -146,14 +271,32 @@ function formatBytes(value: number | null) {
 
 function formatMetricValue(value: number | null, unit: string) {
   if (value === null || Number.isNaN(value)) return "No data";
-  const digits = unit === "%" || unit === "KB/s" ? 1 : 2;
+  const digits = unit === "%" || unit === "MB" ? 1 : 2;
   return `${value.toFixed(digits)}${unit ? ` ${unit}` : ""}`;
+}
+
+function targetName(target: PrometheusTarget) {
+  return target.labels.instance || target.scrapeUrl.replace(/^https?:\/\//, "");
+}
+
+function targetJob(target: PrometheusTarget) {
+  return target.labels.job || target.scrapePool || "unknown";
 }
 
 export function Monitoring() {
   const [liveMetrics, setLiveMetrics] = useState<LiveMetric[]>(initialMetrics);
+  const [targets, setTargets] = useState<PrometheusTarget[]>([]);
+  const [metricSource, setMetricSource] = useState<MetricSource>("Loading");
   const [lastUpdated, setLastUpdated] = useState("Loading");
   const [loadError, setLoadError] = useState("");
+  const [prometheusError, setPrometheusError] = useState("");
+
+  const targetSummary = useMemo(() => {
+    const up = targets.filter((target) => target.health === "up").length;
+    const down = targets.filter((target) => target.health !== "up").length;
+    return { up, down, total: targets.length };
+  }, [targets]);
+
   const riskSummary = liveMetrics.reduce<Record<RiskLevel, number>>(
     (summary, metric) => ({ ...summary, [metric.risk]: summary[metric.risk] + 1 }),
     { low: 0, medium: 0, high: 0, unknown: 0 },
@@ -165,14 +308,35 @@ export function Monitoring() {
 
     async function loadMetrics() {
       try {
-        const metrics = await fetchNodeExporterMetrics();
+        const prometheusTargets = await fetchPrometheusTargets();
         if (!mounted) return;
-        setLiveMetrics(metrics);
-        setLastUpdated(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-        setLoadError("");
+        setTargets(prometheusTargets);
+        setPrometheusError("");
       } catch (error) {
         if (!mounted) return;
-        setLoadError(error instanceof Error ? error.message : "Prometheus query failed");
+        setPrometheusError(error instanceof Error ? error.message : "prometheus targets failed");
+      }
+
+      try {
+        const metrics = await fetchPrometheusMetrics();
+        if (!mounted) return;
+        setLiveMetrics(metrics);
+        setMetricSource("Prometheus");
+        setLastUpdated(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+        setLoadError("");
+      } catch (prometheusMetricError) {
+        try {
+          const metrics = await fetchNodeExporterMetrics();
+          if (!mounted) return;
+          setLiveMetrics(metrics);
+          setMetricSource("Exporter fallback");
+          setLastUpdated(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+          setLoadError(prometheusMetricError instanceof Error ? prometheusMetricError.message : "Prometheus query returned no data");
+        } catch (exporterError) {
+          if (!mounted) return;
+          setMetricSource("Loading");
+          setLoadError(exporterError instanceof Error ? exporterError.message : "monitoring metrics failed");
+        }
       }
     }
 
@@ -194,17 +358,18 @@ export function Monitoring() {
         </div>
         <div className="monitoring-actions">
           {monitoringLinks.map((link) => (
-            <a key={link.href} className="ghost-btn" href={link.href} target="_blank" rel="noreferrer">
+            <a key={link.href} className="ghost-btn" href={link.href} target="_blank" rel="noreferrer" title={link.meta}>
               <ExternalLink size={16} />
               {link.label}
             </a>
           ))}
         </div>
       </div>
+
       <div className="admin-metrics">
         <MetricCard label="Overall Risk" value={overallRisk.toUpperCase()} state={`${riskSummary.high}/${riskSummary.medium}/${riskSummary.low}`} />
-        <MetricCard label="Node Exporter" value=":9100" state="LIVE" />
-        <MetricCard label="Prometheus" value=":9090" state="READY" />
+        <MetricCard label="Prometheus Targets" value={`${targetSummary.up}/${targetSummary.total}`} state={targetSummary.down > 0 ? `${targetSummary.down} DOWN` : "SCRAPING"} />
+        <MetricCard label="Metric Source" value={metricSource} state={metricSource === "Prometheus" ? "QUERY API" : "CHECK PROMQL"} />
         <MetricCard label="Refresh" value="15s" state={lastUpdated} />
       </div>
 
@@ -232,26 +397,58 @@ export function Monitoring() {
 
       <div className="monitoring-layout">
         <article className="glass-panel">
-          <h2><BarChart3 size={20} /> Live Metrics</h2>
-          <p>dragon-k3s node-exporter 원천 지표를 직접 읽어 현재 상태를 표시한다.</p>
+          <h2><Database size={20} /> Prometheus Scrape</h2>
+          <p>Prometheus API로 scrape target 상태를 조회하고, 가능한 경우 PromQL query 결과를 그대로 표시한다.</p>
           <div className="monitoring-facts">
-            <span><strong>Job</strong>node-exporter</span>
-            <span><strong>Source</strong>192.168.232.133:9100</span>
-            <span><strong>Updated</strong>{lastUpdated}</span>
+            <span><strong>Endpoint</strong>192.168.232.135:9090</span>
+            <span><strong>Targets</strong>{targetSummary.up} up / {targetSummary.down} down</span>
+            <span><strong>Query</strong>/api/v1/query</span>
           </div>
         </article>
 
         <article className="glass-panel">
-          <h2><MonitorCog size={20} /> Readiness Check</h2>
-          <p>Prometheus와 Grafana는 운영 도구로 유지하고, 이 화면은 시연 안정성을 위해 exporter 원천값을 직접 표시한다.</p>
+          <h2><MonitorCog size={20} /> 운영 판단</h2>
+          <p>게이지, 임계치, 상세 PromQL을 함께 보여서 장애 징후를 빠르게 확인한다.</p>
           <div className="monitoring-facts">
-            <span><strong>Exporter</strong>192.168.232.133:9100</span>
-            <span><strong>Target</strong>dragon-k3s</span>
+            <span><strong>Primary</strong>Prometheus</span>
+            <span><strong>Fallback</strong>node-exporter direct</span>
+            <span><strong>Target Node</strong>dragon-k3s</span>
           </div>
         </article>
       </div>
 
-      {loadError && <p className="monitoring-error">{loadError}</p>}
+      {(prometheusError || loadError) && (
+        <div className="monitoring-error">
+          {prometheusError && <span>Prometheus target check: {prometheusError}</span>}
+          {loadError && <span>Metric query: {loadError}</span>}
+        </div>
+      )}
+
+      <div className="prometheus-targets">
+        <div className="section-title-row">
+          <h2>Prometheus Targets</h2>
+          <span>{targetSummary.total || "No"} active target</span>
+        </div>
+        <div className="target-list">
+          {targets.length === 0 ? (
+            <article className="target-row empty">
+              <strong>No target data</strong>
+              <span>Prometheus scrape 설정을 확인해야 한다.</span>
+            </article>
+          ) : (
+            targets.map((target) => (
+              <article className="target-row" key={`${target.scrapePool}-${target.scrapeUrl}`}>
+                <span className={`target-health ${target.health}`}>{target.health}</span>
+                <div>
+                  <strong>{targetName(target)}</strong>
+                  <span>{targetJob(target)} · {target.scrapeUrl}</span>
+                </div>
+                <em>{target.lastError || "scrape ok"}</em>
+              </article>
+            ))
+          )}
+        </div>
+      </div>
 
       <div className="live-metrics-grid">
         {liveMetrics.map((metric) => {
@@ -266,6 +463,10 @@ export function Monitoring() {
                 <span>{metric.label}</span>
                 <strong>{formatMetricValue(metric.value, metric.unit)}</strong>
               </div>
+              <div className="metric-source-row">
+                <span>{metric.source}</span>
+                <code>{metric.query}</code>
+              </div>
               <div className="gauge-wrap">
                 <div className="gauge" style={{ background: `conic-gradient(var(--gold) ${percentage * 3.6}deg, rgba(255,255,255,.08) 0deg)` }}>
                   <strong>{metric.value === null ? "n/a" : `${Math.round(percentage)}%`}</strong>
@@ -278,8 +479,8 @@ export function Monitoring() {
                 </div>
               </div>
               <div className="metric-detail">
-                <span><strong>Source</strong>{metric.detail}</span>
-                <span><strong>Threshold</strong>{metric.max}{metric.unit}</span>
+                <span><strong>Source detail</strong>{metric.detail}</span>
+                <span><strong>Threshold max</strong>{metric.max}{metric.unit}</span>
               </div>
             </details>
           );
@@ -287,10 +488,10 @@ export function Monitoring() {
       </div>
 
       <div className="monitoring-pipeline">
-        <article><Server /><strong>dragon-k3s</strong><span>runtime node</span></article>
-        <article><Activity /><strong>node-exporter</strong><span>raw metrics</span></article>
-        <article><Database /><strong>Prometheus</strong><span>storage/query</span></article>
-        <article><BarChart3 /><strong>Admin UI</strong><span>live status</span></article>
+        <article><Server /><strong>dragon-k3s</strong><span>application runtime</span></article>
+        <article><Activity /><strong>node-exporter</strong><span>host metrics :9100</span></article>
+        <article><Database /><strong>Prometheus</strong><span>scrape + PromQL</span></article>
+        <article><BarChart3 /><strong>Admin UI</strong><span>status + risk view</span></article>
       </div>
     </section>
   );
