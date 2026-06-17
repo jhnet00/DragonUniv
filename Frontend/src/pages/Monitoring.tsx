@@ -35,42 +35,42 @@ const metricQueries: Omit<LiveMetric, "value">[] = [
     label: "CPU Usage",
     unit: "%",
     max: 100,
-    query: '100 - (avg(rate(node_cpu_seconds_total{instance="192.168.232.133:9100",mode="idle"}[5m])) * 100)',
+    query: '100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)',
   },
   {
     key: "memory",
     label: "Memory Usage",
     unit: "%",
     max: 100,
-    query: '(1 - node_memory_MemAvailable_bytes{instance="192.168.232.133:9100"} / node_memory_MemTotal_bytes{instance="192.168.232.133:9100"}) * 100',
+    query: '(1 - sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes)) * 100',
   },
   {
     key: "disk",
     label: "Root Disk Used",
     unit: "%",
     max: 100,
-    query: '100 - (100 * node_filesystem_avail_bytes{instance="192.168.232.133:9100",mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{instance="192.168.232.133:9100",mountpoint="/",fstype!~"tmpfs|overlay"})',
+    query: '100 - (100 * sum(node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}) / sum(node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}))',
   },
   {
     key: "load",
     label: "Load Average",
     unit: "",
     max: 2,
-    query: 'node_load1{instance="192.168.232.133:9100"}',
+    query: 'avg(node_load1)',
   },
   {
     key: "rx",
     label: "Network RX",
     unit: "KB/s",
     max: 1024,
-    query: 'sum(rate(node_network_receive_bytes_total{instance="192.168.232.133:9100",device!~"lo|veth.*|docker.*|flannel.*|cni.*"}[5m])) / 1024',
+    query: 'sum(rate(node_network_receive_bytes_total{device!~"lo|veth.*|docker.*|flannel.*|cni.*"}[5m])) / 1024',
   },
   {
     key: "tx",
     label: "Network TX",
     unit: "KB/s",
     max: 1024,
-    query: 'sum(rate(node_network_transmit_bytes_total{instance="192.168.232.133:9100",device!~"lo|veth.*|docker.*|flannel.*|cni.*"}[5m])) / 1024',
+    query: 'sum(rate(node_network_transmit_bytes_total{device!~"lo|veth.*|docker.*|flannel.*|cni.*"}[5m])) / 1024',
   },
 ];
 
@@ -165,7 +165,7 @@ export function Monitoring() {
           <p>Prometheus API를 통해 dragon-k3s node-exporter 값을 직접 표시한다.</p>
           <div className="monitoring-facts">
             <span><strong>Job</strong>node-exporter</span>
-            <span><strong>Instance</strong>192.168.232.133:9100</span>
+            <span><strong>Source</strong>Prometheus API</span>
             <span><strong>Updated</strong>{lastUpdated}</span>
           </div>
         </article>
@@ -195,7 +195,6 @@ export function Monitoring() {
               <div className="metric-bar" aria-label={`${metric.label} meter`}>
                 <span style={{ width: `${percentage}%` }} />
               </div>
-              <code>{metric.query}</code>
             </article>
           );
         })}
