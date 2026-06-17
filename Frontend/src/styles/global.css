@@ -272,9 +272,10 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 
 @media (max-width: 1040px) {
   .app-shell { grid-template-columns: 1fr; }
-  .sidebar { position: sticky; top: 82px; z-index: 2; padding: 10px 12px; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sidebar { position: sticky; top: 82px; z-index: 2; padding: 10px 12px; overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); }
   .sidebar strong { display: none; }
-  .sidebar nav { display: flex; min-width: max-content; }
+  .sidebar nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; min-width: 0; }
+  .sidebar a { justify-content: center; min-width: 0; padding: 0 10px; text-align: center; }
   .status-grid, .admin-metrics, .course-grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
   .wish-summary { grid-template-columns: 1fr; }
   .course-list-item { grid-template-columns: 1fr; }
@@ -298,6 +299,8 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   .slide-card { width: 280px; }
   .app-shell { grid-template-rows: 86px auto 1fr; }
   .sidebar { top: 86px; }
+  .sidebar nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sidebar a { min-height: 44px; font-size: 13px; }
   .page-head { display: grid; }
   .status-grid, .admin-metrics, .course-grid, .detail-grid, .diagram { grid-template-columns: 1fr; }
   .monitoring-actions { justify-content: stretch; }
