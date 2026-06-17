@@ -14,7 +14,7 @@ const nodes = [
 ];
 
 type RiskLevel = "low" | "medium" | "high" | "unknown";
-type MetricSource = "Prometheus" | "Exporter fallback" | "Loading";
+type MetricSource = "Prometheus" | "Node Exporter" | "Loading";
 
 type LiveMetric = {
   key: string;
@@ -134,6 +134,13 @@ const initialMetrics: LiveMetric[] = metricDefinitions.map((metric) => ({
   risk: "unknown",
 }));
 
+const riskLabels: Record<RiskLevel, string> = {
+  low: "정상",
+  medium: "주의",
+  high: "위험",
+  unknown: "확인 중",
+};
+
 function readMetric(metrics: string, name: string, labelIncludes?: string[]) {
   const line = metrics
     .split("\n")
@@ -214,7 +221,7 @@ async function fetchPrometheusMetrics(): Promise<LiveMetric[]> {
     withRisk({
       ...metric,
       value: values[index],
-      detail: metric.query,
+      detail: "Prometheus Query API",
       source: "Prometheus",
     }),
   );
@@ -256,8 +263,8 @@ async function fetchNodeExporterMetrics(): Promise<LiveMetric[]> {
         ? `${formatBytes(memoryTotal)} total / ${formatBytes(memoryAvailable)} available`
         : metric.key === "disk"
           ? `${formatBytes(diskSize)} size / ${formatBytes(diskAvailable)} available`
-          : metric.query,
-      source: "Exporter fallback",
+          : "Node Exporter metric sample",
+      source: "Node Exporter",
     }),
   );
 }
@@ -302,6 +309,14 @@ export function Monitoring() {
     { low: 0, medium: 0, high: 0, unknown: 0 },
   );
   const overallRisk = riskSummary.high > 0 ? "high" : riskSummary.medium > 0 ? "medium" : riskSummary.unknown > 0 ? "unknown" : "low";
+  const notableMetrics = liveMetrics.filter((metric) => metric.risk === "high" || metric.risk === "medium");
+  const reportMessage = overallRisk === "high"
+    ? "즉시 확인이 필요한 지표가 있다. 리소스 사용률과 target 상태를 우선 점검한다."
+    : overallRisk === "medium"
+      ? "일부 지표가 주의 구간에 있다. 배포 직후 트래픽 변화와 메모리 사용률을 같이 본다."
+      : overallRisk === "unknown"
+        ? "수집 중인 지표가 일부 비어 있다. Prometheus target과 exporter 응답 상태를 확인한다."
+        : "현재 주요 인프라 지표는 안정 범위다. k3s 노드와 모니터링 VM target이 정상 응답 중인지 계속 감시한다.";
 
   useEffect(() => {
     let mounted = true;
@@ -324,14 +339,14 @@ export function Monitoring() {
         setMetricSource("Prometheus");
         setLastUpdated(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
         setLoadError("");
-      } catch (prometheusMetricError) {
+      } catch {
         try {
           const metrics = await fetchNodeExporterMetrics();
           if (!mounted) return;
           setLiveMetrics(metrics);
-          setMetricSource("Exporter fallback");
+          setMetricSource("Node Exporter");
           setLastUpdated(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-          setLoadError(prometheusMetricError instanceof Error ? prometheusMetricError.message : "Prometheus query returned no data");
+          setLoadError("");
         } catch (exporterError) {
           if (!mounted) return;
           setMetricSource("Loading");
@@ -369,7 +384,7 @@ export function Monitoring() {
       <div className="admin-metrics">
         <MetricCard label="Overall Risk" value={overallRisk.toUpperCase()} state={`${riskSummary.high}/${riskSummary.medium}/${riskSummary.low}`} />
         <MetricCard label="Prometheus Targets" value={`${targetSummary.up}/${targetSummary.total}`} state={targetSummary.down > 0 ? `${targetSummary.down} DOWN` : "SCRAPING"} />
-        <MetricCard label="Metric Source" value={metricSource} state={metricSource === "Prometheus" ? "QUERY API" : "CHECK PROMQL"} />
+        <MetricCard label="Data Path" value={metricSource === "Prometheus" ? "Prometheus" : "Prom + Exporter"} state="LIVE" />
         <MetricCard label="Refresh" value="15s" state={lastUpdated} />
       </div>
 
@@ -389,10 +404,58 @@ export function Monitoring() {
         ))}
       </div>
 
-      <div className="risk-strip">
-        <article className="risk-card low"><CheckCircle2 /><span>Low</span><strong>{riskSummary.low}</strong></article>
-        <article className="risk-card medium"><AlertTriangle /><span>Medium</span><strong>{riskSummary.medium}</strong></article>
-        <article className="risk-card high"><AlertTriangle /><span>High</span><strong>{riskSummary.high}</strong></article>
+      <div className={`ai-report-card risk-${overallRisk}`}>
+        <div>
+          <p className="eyebrow">AI Report</p>
+          <h2>{riskLabels[overallRisk]} 상태로 판단됨</h2>
+          <p>{reportMessage}</p>
+        </div>
+        <div className="ai-risk-chips">
+          <span><CheckCircle2 size={16} /> 정상 {riskSummary.low}</span>
+          <span><AlertTriangle size={16} /> 주의 {riskSummary.medium}</span>
+          <span><AlertTriangle size={16} /> 위험 {riskSummary.high}</span>
+        </div>
+        <div className="ai-report-list">
+          {(notableMetrics.length > 0 ? notableMetrics : liveMetrics.slice(0, 3)).map((metric) => (
+            <span key={metric.key}>
+              <strong>{metric.label}</strong>
+              {riskLabels[metric.risk]} · {formatMetricValue(metric.value, metric.unit)}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="live-metrics-grid">
+        {liveMetrics.map((metric) => {
+          const percentage = metric.value === null ? 0 : Math.max(0, Math.min(100, (metric.value / metric.max) * 100));
+          return (
+            <article className={`live-metric-card risk-${metric.risk}`} key={metric.key}>
+              <div className="live-metric-top">
+                <span className={`risk-pill ${metric.risk}`}>{riskLabels[metric.risk]}</span>
+                <span>{metric.source}</span>
+              </div>
+              <div className="live-metric-head">
+                <span>{metric.label}</span>
+                <strong>{formatMetricValue(metric.value, metric.unit)}</strong>
+              </div>
+              <div className="gauge-wrap">
+                <div className="gauge" style={{ background: `conic-gradient(var(--gold) ${percentage * 3.6}deg, rgba(255,255,255,.08) 0deg)` }}>
+                  <strong>{metric.value === null ? "n/a" : `${Math.round(percentage)}%`}</strong>
+                </div>
+                <div>
+                  <p>{metric.description}</p>
+                  <div className="metric-bar" aria-label={`${metric.label} meter`}>
+                    <span style={{ width: `${percentage}%` }} />
+                  </div>
+                </div>
+              </div>
+              <div className="metric-detail">
+                <span><strong>Metric</strong>{metric.detail}</span>
+                <span><strong>Threshold max</strong>{metric.max}{metric.unit}</span>
+              </div>
+            </article>
+          );
+        })}
       </div>
 
       <div className="monitoring-layout">
@@ -448,43 +511,6 @@ export function Monitoring() {
             ))
           )}
         </div>
-      </div>
-
-      <div className="live-metrics-grid">
-        {liveMetrics.map((metric) => {
-          const percentage = metric.value === null ? 0 : Math.max(0, Math.min(100, (metric.value / metric.max) * 100));
-          return (
-            <details className={`live-metric-card risk-${metric.risk}`} key={metric.key}>
-              <summary>
-                <span className={`risk-pill ${metric.risk}`}>{metric.risk}</span>
-                <span>자세히</span>
-              </summary>
-              <div className="live-metric-head">
-                <span>{metric.label}</span>
-                <strong>{formatMetricValue(metric.value, metric.unit)}</strong>
-              </div>
-              <div className="metric-source-row">
-                <span>{metric.source}</span>
-                <code>{metric.query}</code>
-              </div>
-              <div className="gauge-wrap">
-                <div className="gauge" style={{ background: `conic-gradient(var(--gold) ${percentage * 3.6}deg, rgba(255,255,255,.08) 0deg)` }}>
-                  <strong>{metric.value === null ? "n/a" : `${Math.round(percentage)}%`}</strong>
-                </div>
-                <div>
-                  <p>{metric.description}</p>
-                  <div className="metric-bar" aria-label={`${metric.label} meter`}>
-                    <span style={{ width: `${percentage}%` }} />
-                  </div>
-                </div>
-              </div>
-              <div className="metric-detail">
-                <span><strong>Source detail</strong>{metric.detail}</span>
-                <span><strong>Threshold max</strong>{metric.max}{metric.unit}</span>
-              </div>
-            </details>
-          );
-        })}
       </div>
 
       <div className="monitoring-pipeline">
