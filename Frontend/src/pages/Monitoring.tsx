@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Activity, BarChart3, Database, ExternalLink, GitBranch, MonitorCog, Network, Server } from "lucide-react";
 import { MetricCard } from "../components/MetricCard";
 
@@ -12,9 +13,113 @@ const nodes = [
   { name: "dragon-monitoring", role: "Prometheus / Grafana", ip: "192.168.232.135", endpoint: ":9090 / :3000 / :9100", state: "UP" },
 ];
 
-const publicDashboardUrl = "http://192.168.232.135:3000/public-dashboards/68ec4f29b6414f1088b09e464361a688";
+type PrometheusResult = {
+  status: string;
+  data?: {
+    result?: Array<{ value?: [number, string] }>;
+  };
+};
+
+type LiveMetric = {
+  key: string;
+  label: string;
+  query: string;
+  unit: string;
+  max: number;
+  value: number | null;
+};
+
+const metricQueries: Omit<LiveMetric, "value">[] = [
+  {
+    key: "cpu",
+    label: "CPU Usage",
+    unit: "%",
+    max: 100,
+    query: '100 - (avg(rate(node_cpu_seconds_total{instance="192.168.232.133:9100",mode="idle"}[5m])) * 100)',
+  },
+  {
+    key: "memory",
+    label: "Memory Usage",
+    unit: "%",
+    max: 100,
+    query: '(1 - node_memory_MemAvailable_bytes{instance="192.168.232.133:9100"} / node_memory_MemTotal_bytes{instance="192.168.232.133:9100"}) * 100',
+  },
+  {
+    key: "disk",
+    label: "Root Disk Used",
+    unit: "%",
+    max: 100,
+    query: '100 - (100 * node_filesystem_avail_bytes{instance="192.168.232.133:9100",mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{instance="192.168.232.133:9100",mountpoint="/",fstype!~"tmpfs|overlay"})',
+  },
+  {
+    key: "load",
+    label: "Load Average",
+    unit: "",
+    max: 2,
+    query: 'node_load1{instance="192.168.232.133:9100"}',
+  },
+  {
+    key: "rx",
+    label: "Network RX",
+    unit: "KB/s",
+    max: 1024,
+    query: 'sum(rate(node_network_receive_bytes_total{instance="192.168.232.133:9100",device!~"lo|veth.*|docker.*|flannel.*|cni.*"}[5m])) / 1024',
+  },
+  {
+    key: "tx",
+    label: "Network TX",
+    unit: "KB/s",
+    max: 1024,
+    query: 'sum(rate(node_network_transmit_bytes_total{instance="192.168.232.133:9100",device!~"lo|veth.*|docker.*|flannel.*|cni.*"}[5m])) / 1024',
+  },
+];
+
+async function fetchPrometheusValue(query: string) {
+  const response = await fetch(`/prometheus/api/v1/query?query=${encodeURIComponent(query)}`);
+  if (!response.ok) throw new Error(`Prometheus query failed: ${response.status}`);
+  const payload = (await response.json()) as PrometheusResult;
+  const rawValue = payload.data?.result?.[0]?.value?.[1];
+  return rawValue ? Number(rawValue) : null;
+}
+
+function formatMetricValue(value: number | null, unit: string) {
+  if (value === null || Number.isNaN(value)) return "No data";
+  const digits = unit === "%" || unit === "KB/s" ? 1 : 2;
+  return `${value.toFixed(digits)}${unit ? ` ${unit}` : ""}`;
+}
 
 export function Monitoring() {
+  const [liveMetrics, setLiveMetrics] = useState<LiveMetric[]>(
+    metricQueries.map((metric) => ({ ...metric, value: null })),
+  );
+  const [lastUpdated, setLastUpdated] = useState("Loading");
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadMetrics() {
+      try {
+        const values = await Promise.all(metricQueries.map((metric) => fetchPrometheusValue(metric.query)));
+        if (!mounted) return;
+        setLiveMetrics(metricQueries.map((metric, index) => ({ ...metric, value: values[index] })));
+        setLastUpdated(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+        setLoadError("");
+      } catch (error) {
+        if (!mounted) return;
+        setLoadError(error instanceof Error ? error.message : "Prometheus query failed");
+      }
+    }
+
+    void loadMetrics();
+    const timer = window.setInterval(() => void loadMetrics(), 15000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   return (
     <section className="page-stack">
       <div className="page-head compact">
@@ -56,12 +161,12 @@ export function Monitoring() {
 
       <div className="monitoring-layout">
         <article className="glass-panel">
-          <h2><BarChart3 size={20} /> Grafana Dashboard</h2>
-          <p>Node Exporter Full dashboard 기준으로 k3s VM의 CPU, Memory, Disk, Network 지표를 확인한다.</p>
+          <h2><BarChart3 size={20} /> Live Metrics</h2>
+          <p>Prometheus API를 통해 dragon-k3s node-exporter 값을 직접 표시한다.</p>
           <div className="monitoring-facts">
             <span><strong>Job</strong>node-exporter</span>
             <span><strong>Instance</strong>192.168.232.133:9100</span>
-            <span><strong>Datasource</strong>Prometheus</span>
+            <span><strong>Updated</strong>{lastUpdated}</span>
           </div>
         </article>
 
@@ -76,15 +181,25 @@ export function Monitoring() {
         </article>
       </div>
 
-      <article className="grafana-panel-card grafana-dashboard-card">
-        <div className="grafana-panel-head">
-          <h2>Grafana Public Dashboard</h2>
-          <a href={publicDashboardUrl} target="_blank" rel="noreferrer" aria-label="Open Grafana public dashboard">
-            <ExternalLink size={16} />
-          </a>
-        </div>
-        <iframe title="Grafana public dashboard" src={publicDashboardUrl} loading="lazy" />
-      </article>
+      {loadError && <p className="monitoring-error">{loadError}</p>}
+
+      <div className="live-metrics-grid">
+        {liveMetrics.map((metric) => {
+          const percentage = metric.value === null ? 0 : Math.max(0, Math.min(100, (metric.value / metric.max) * 100));
+          return (
+            <article className="live-metric-card" key={metric.key}>
+              <div className="live-metric-head">
+                <span>{metric.label}</span>
+                <strong>{formatMetricValue(metric.value, metric.unit)}</strong>
+              </div>
+              <div className="metric-bar" aria-label={`${metric.label} meter`}>
+                <span style={{ width: `${percentage}%` }} />
+              </div>
+              <code>{metric.query}</code>
+            </article>
+          );
+        })}
+      </div>
 
       <div className="diagram monitoring-flow">
         <div><Server /> dragon-k3s</div><span />

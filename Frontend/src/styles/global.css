@@ -180,6 +180,15 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 .monitoring-facts span { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: rgba(255,255,255,.04); }
 .monitoring-facts strong { color: #fff; }
 .query-chip { display: block; margin-top: 16px; padding: 14px; border: 1px solid rgba(201,168,106,.26); border-radius: 8px; color: #f6dbe3; background: rgba(0,0,0,.26); overflow-x: auto; }
+.live-metrics-grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 14px; }
+.live-metric-card { min-width: 0; display: grid; gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: 0 18px 50px rgba(0,0,0,.18); }
+.live-metric-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.live-metric-head span { color: var(--muted); font-size: 13px; font-weight: 800; }
+.live-metric-head strong { font-size: 24px; text-align: right; }
+.metric-bar { height: 12px; overflow: hidden; border: 1px solid rgba(201,168,106,.22); border-radius: 999px; background: rgba(0,0,0,.26); }
+.metric-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #13bc86, var(--gold), var(--ruby)); transition: width .3s ease; }
+.live-metric-card code { min-height: 44px; padding: 10px; border-radius: 8px; color: #d9c7cc; background: rgba(0,0,0,.2); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.monitoring-error { margin: 0; padding: 12px 14px; border: 1px solid rgba(255,180,192,.32); border-radius: 8px; color: #ffb4c0; background: rgba(122,30,53,.16); }
 .grafana-panel-grid { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 14px; }
 .grafana-panel-card { min-width: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); box-shadow: 0 18px 50px rgba(0,0,0,.2); }
 .grafana-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 14px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.04); }
@@ -203,7 +212,7 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
   .course-list-actions { justify-items: start; }
   .form-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
   .profile-layout, .two-col { grid-template-columns: 1fr; }
-  .monitoring-grid, .monitoring-layout, .grafana-panel-grid { grid-template-columns: 1fr; }
+  .monitoring-grid, .monitoring-layout, .grafana-panel-grid, .live-metrics-grid { grid-template-columns: 1fr; }
   .monitor-node-card { grid-template-columns: 1fr; }
   .monitor-node-card dl { min-width: 0; }
 }
